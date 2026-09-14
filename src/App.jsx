@@ -1,4 +1,41 @@
 import { useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+
+import Dashboard from "./pages/Dashboard";
+import DashboardLayout from "./components/DashboardLayout";
+
+import Campaigns from "./pages/Campaigns";
+import NewCampaign from "./pages/NewCampaign";
+import CampaignDetail from "./pages/CampaignDetail";
+import CampaignCreators from "./pages/CampaignCreators";
+import CampaignEdit from "./pages/CampaignEdit";
+import AddCampaignCreator from "./pages/AddCampaignCreator";
+import CollaborationDetail from "./pages/CollaborationDetail";
+
+import CreatorDashboardLayout from "./components/CreatorDashboardLayout";
+import CreatorDashboard from "./pages/CreatorDashboard";
+import CreatorCampaigns from "./pages/CreatorCampaigns";
+import CreatorProfile from "./pages/CreatorProfile";
+import CreatorPayments from "./pages/CreatorPayments";
+import Creators from "./pages/Creators";
+import CreatorDetail from "./pages/CreatorDetail";
+import CreatorCollaborationDetail from "./pages/CreatorCollaborationDetail";
+
+import { AuthProvider } from "./context/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import AdminDashboardLayout from "./components/AdminDashboardLayout";
+import AdminDashboard from "./pages/AdminDashboard";
+import MetricVerification from "./pages/MetricVerification";
+import AdminBrands from "./pages/AdminBrands";
+import AdminBrandDetail from "./pages/AdminBrandDetail";
+import AdminCreators from "./pages/AdminCreators";
+import AdminCreatorDetail from "./pages/AdminCreatorDetail";
+import AdminCampaigns from "./pages/AdminCampaigns";
+import AdminCampaignDetail from "./pages/AdminCampaignDetail";
+import AdminFinance from "./pages/AdminFinance";
 
 const services = [
   {
@@ -29,7 +66,7 @@ const stats = [
   ["03", "RESULTADOS"],
 ];
 
-function App() {
+function Landing() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -64,12 +101,23 @@ function App() {
             </a>
           </div>
 
-          <a
-            href="#contact"
-            className="hidden rounded-full bg-[#111111] px-6 py-3 text-[10px] font-medium uppercase tracking-[0.16em] text-white transition-transform hover:scale-105 md:block"
-          >
-            Hablemos
-          </a>
+        <div className="hidden items-center gap-3 md:flex">
+
+  <a
+    href="#contact"
+    className="rounded-full border border-black/15 px-6 py-3 text-[10px] font-medium uppercase tracking-[0.16em] transition-colors hover:bg-black hover:text-white"
+  >
+    Hablemos
+  </a>
+
+  <a
+    href="/login"
+    className="rounded-full bg-[#111111] px-6 py-3 text-[10px] font-medium uppercase tracking-[0.16em] text-white transition-transform hover:scale-105"
+  >
+    Acceder
+  </a>
+
+</div>
 
           <button
             onClick={() => setMenuOpen(!menuOpen)}
@@ -102,7 +150,10 @@ function App() {
               </a>
 
               <a href="#contact" onClick={() => setMenuOpen(false)}>
-                Hablemos
+               Hablemos
+              </a>
+              <a href="/login" onClick={() => setMenuOpen(false)}>
+                Acceder
               </a>
             </div>
           </div>
@@ -295,12 +346,12 @@ function App() {
                   negocio.
                 </p>
 
-                <a
-                  href="#contact"
-                  className="mt-10 inline-flex rounded-full border border-white/30 px-7 py-4 text-[10px] uppercase tracking-[0.18em] transition-colors hover:bg-white hover:text-black"
-                >
-                  Iniciar una campaña
-                </a>
+               <a
+  href="/login"
+  className="mt-10 inline-flex rounded-full border border-white/30 px-7 py-4 text-[10px] uppercase tracking-[0.18em] transition-colors hover:bg-white hover:text-black"
+>
+  Iniciar una campaña
+</a>
               </div>
             </div>
 
@@ -366,9 +417,12 @@ function App() {
                 tu trabajo.
               </p>
 
-              <button className="mt-10 rounded-full bg-black px-7 py-4 text-[10px] uppercase tracking-[0.18em] text-white transition-transform hover:scale-105">
-                Únete a nuestra red de creadores
-              </button>
+              <a
+  href="/login"
+  className="mt-10 inline-flex rounded-full bg-black px-7 py-4 text-[10px] uppercase tracking-[0.18em] text-white transition-transform hover:scale-105"
+>
+  Únete a nuestra red de creadores
+</a>
             </div>
           </div>
         </section>
@@ -624,6 +678,168 @@ function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+
+      <AuthProvider>
+
+        <Routes>
+
+          {/* WEB PÚBLICA */}
+
+          <Route
+            path="/"
+            element={<Landing />}
+          />
+
+          {/* AUTENTICACIÓN */}
+
+          <Route
+            path="/login"
+            element={<Login />}
+          />
+
+          <Route
+            path="/register"
+            element={<Register />}
+          />
+          {/* =========================
+              STAFF
+          ========================== */}
+
+       <Route element={<ProtectedRoute allowedRoles={["STAFF"]} />}>
+        <Route path="/admin" element={<AdminDashboardLayout />}>
+          <Route index element={<AdminDashboard />} />
+
+          <Route path="brands" element={<AdminBrands />} />
+          <Route path="brands/:id" element={<AdminBrandDetail />} />
+
+          <Route path="creators" element={<AdminCreators />} />
+          <Route
+            path="creators/:id"
+            element={<AdminCreatorDetail />}
+          />
+           <Route path="campaigns" element={<AdminCampaigns />} />
+          <Route
+            path="campaigns/:id"
+            element={<AdminCampaignDetail />}
+          />
+          <Route path="finance" element={<AdminFinance />} />
+          <Route
+            path="metric-verification"
+            element={<MetricVerification />}
+          />
+        </Route>
+      </Route>
+
+          {/* =========================
+              MARCA
+          ========================== */}
+
+          <Route element={<ProtectedRoute allowedRoles={["BRAND"]} />}>
+
+            <Route
+              path="/platform"
+              element={<DashboardLayout />}
+            >
+
+              <Route
+                index
+                element={<Dashboard />}
+              />
+
+              <Route
+                path="campaigns"
+                element={<Campaigns />}
+              />
+
+              <Route
+                path="campaigns/new"
+                element={<NewCampaign />}
+              />
+
+              <Route
+                path="campaigns/:id"
+                element={<CampaignDetail />}
+              />
+              <Route
+                path="creators"
+                element={<Creators />}
+              />
+              <Route
+                path="creators/:id"
+               element={<CreatorDetail />}
+              />
+              <Route
+                path="campaigns/:id/creators"
+                element={<CampaignCreators />}
+              />
+              <Route
+                path="campaigns/:campaignId/creators/:campaignCreatorId"
+                element={<CollaborationDetail />}
+              />
+              <Route
+                path="campaigns/:id/edit"
+                element={<CampaignEdit />}
+              />
+              <Route
+                path="campaigns/:id/creators/add"
+                element={<AddCampaignCreator />}
+              />
+
+            </Route>
+
+          </Route>
+
+
+          {/* =========================
+              CREADOR
+          ========================== */}
+
+          <Route element={<ProtectedRoute allowedRoles={["CREATOR"]} />}>
+
+            <Route
+              path="/creator"
+              element={<CreatorDashboardLayout />}
+            >
+
+              <Route
+                index
+                element={<CreatorDashboard />}
+              />
+
+              <Route
+                path="campaigns"
+                element={<CreatorCampaigns />}
+              />
+
+              <Route
+                path="profile"
+                element={<CreatorProfile />}
+              />
+
+              <Route
+                path="payments"
+                element={<CreatorPayments />}
+              />
+              <Route
+                path="campaigns/:id"
+                element={<CreatorCollaborationDetail />}
+              />
+
+            </Route>
+
+          </Route>
+
+        </Routes>
+
+      </AuthProvider>
+
+    </BrowserRouter>
   );
 }
 

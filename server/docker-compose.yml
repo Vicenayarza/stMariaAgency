@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: st-maria-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: st_maria
+      POSTGRES_USER: st_maria
+      POSTGRES_PASSWORD: st_maria_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - st_maria_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  st_maria_postgres_data:
