@@ -20,6 +20,19 @@ function createSessionToken() {
   return crypto.randomBytes(32).toString("base64url");
 }
 
+/**
+ * Registro de una empresa desde la plataforma.
+ *
+ * Al registrarse directamente:
+ * - Se crea el User.
+ * - Se crea el Brand.
+ * - Se crea BrandMember.
+ * - El usuario será OWNER.
+ * - La empresa tendrá SELF_MANAGED.
+ *
+ * Los clientes creados directamente por ST.MARY AGENCY desde Admin
+ * NO utilizarán esta función, ya que podrán existir sin User.
+ */
 export async function registerBrand(params: {
   name: string;
   email: string;
@@ -27,6 +40,24 @@ export async function registerBrand(params: {
   companyName: string;
 }) {
   const email = normalizeEmail(params.email);
+  const name = params.name.trim();
+  const companyName = params.companyName.trim();
+
+  if (!name) {
+    throw new Error("NAME_REQUIRED");
+  }
+
+  if (!email) {
+    throw new Error("EMAIL_REQUIRED");
+  }
+
+  if (!params.password) {
+    throw new Error("PASSWORD_REQUIRED");
+  }
+
+  if (!companyName) {
+    throw new Error("COMPANY_NAME_REQUIRED");
+  }
 
   const existingUser = await prisma.user.findUnique({
     where: { email },
@@ -38,26 +69,71 @@ export async function registerBrand(params: {
 
   const passwordHash = await argon2.hash(params.password);
 
-  const user = await prisma.user.create({
-    data: {
-      email,
-      passwordHash,
-      name: params.name.trim(),
-      role: "BRAND",
-      brand: {
-        create: {
-          companyName: params.companyName.trim(),
-        },
+  const result = await prisma.$transaction(async (tx) => {
+    // 1. Crear usuario
+    const user = await tx.user.create({
+      data: {
+        email,
+        passwordHash,
+        name,
+        role: "BRAND",
+        status: "ACTIVE",
       },
-    },
-    include: {
-      brand: true,
-    },
+    });
+
+    // 2. Crear empresa
+    const brand = await tx.brand.create({
+      data: {
+        companyName,
+        accessMode: "SELF_MANAGED",
+      },
+    });
+
+    // 3. Vincular usuario y empresa
+    const membership = await tx.brandMember.create({
+      data: {
+        userId: user.id,
+        brandId: brand.id,
+
+        role: "OWNER",
+
+        canViewCampaigns: true,
+        canCreateCampaigns: true,
+        canEditCampaigns: true,
+
+        canViewProposals: true,
+        canApproveCreators: true,
+
+        canViewDeliverables: true,
+        canApproveContent: true,
+
+        canViewResults: true,
+        canExportReports: true,
+
+        canDiscoverCreators: true,
+        canContactCreators: true,
+        canSelectCreators: true,
+      },
+    });
+
+    return {
+      ...user,
+
+      brandMemberships: [
+        {
+          ...membership,
+          brand,
+        },
+      ],
+    };
   });
 
-  return user;
+  return result;
 }
 
+/**
+ * Registro de creador.
+ */
 export async function registerCreator(params: {
   name: string;
   email: string;
@@ -66,6 +142,23 @@ export async function registerCreator(params: {
 }) {
   const email = normalizeEmail(params.email);
   const username = params.username.trim().toLowerCase();
+  const name = params.name.trim();
+
+  if (!name) {
+    throw new Error("NAME_REQUIRED");
+  }
+
+  if (!email) {
+    throw new Error("EMAIL_REQUIRED");
+  }
+
+  if (!params.password) {
+    throw new Error("PASSWORD_REQUIRED");
+  }
+
+  if (!username) {
+    throw new Error("USERNAME_REQUIRED");
+  }
 
   const existingUser = await prisma.user.findUnique({
     where: { email },
@@ -89,14 +182,17 @@ export async function registerCreator(params: {
     data: {
       email,
       passwordHash,
-      name: params.name.trim(),
+      name,
       role: "CREATOR",
+      status: "ACTIVE",
+
       creator: {
         create: {
           username,
         },
       },
     },
+
     include: {
       creator: true,
     },
@@ -105,6 +201,12 @@ export async function registerCreator(params: {
   return user;
 }
 
+/**
+ * Login.
+ *
+ * Aquí no necesitamos cargar BrandMember todavía.
+ * La sesión guarda únicamente el userId.
+ */
 export async function login(params: {
   email: string;
   password: string;
@@ -129,7 +231,6 @@ export async function login(params: {
   }
 
   const rawToken = createSessionToken();
-
   const tokenHash = hashSessionToken(rawToken);
 
   const expiresAt = new Date();
@@ -152,6 +253,18 @@ export async function login(params: {
   };
 }
 
+/**
+ * Recupera el usuario asociado a una sesión.
+ *
+ * Para usuarios BRAND carga:
+ *
+ * User
+ *   -> BrandMember
+ *       -> Brand
+ *
+ * También carga Creator y Staff para mantener
+ * compatibilidad con los otros roles.
+ */
 export async function getUserFromSession(
   rawToken: string
 ) {
@@ -161,11 +274,18 @@ export async function getUserFromSession(
     where: {
       tokenHash,
     },
+
     include: {
       user: {
         include: {
-          brand: true,
+          brandMemberships: {
+            include: {
+              brand: true,
+            },
+          },
+
           creator: true,
+          staff: true,
         },
       },
     },
@@ -175,6 +295,7 @@ export async function getUserFromSession(
     return null;
   }
 
+  // Eliminar automáticamente sesiones caducadas
   if (session.expiresAt <= new Date()) {
     await prisma.session.delete({
       where: {
@@ -188,6 +309,9 @@ export async function getUserFromSession(
   return session.user;
 }
 
+/**
+ * Cerrar sesión.
+ */
 export async function logout(rawToken: string) {
   const tokenHash = hashSessionToken(rawToken);
 

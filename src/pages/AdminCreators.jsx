@@ -61,7 +61,7 @@ function AdminCreators() {
           </h1>
 
           <p className="mt-3 max-w-xl text-sm leading-6 text-black/45">
-            Gestiona el talento registrado en ST.MARIA y consulta
+            Gestiona el talento registrado ST.MARY AGENCY  y consulta
             sus métricas y perfiles.
           </p>
         </div>

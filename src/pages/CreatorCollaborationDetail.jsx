@@ -517,6 +517,11 @@ function DeliverableCard({
   disabled,
   onSave,
 }) {
+  const latestRejectedReview =
+  deliverable.reviews?.find(
+    (review) =>
+      review.status === "REJECTED"
+  );
   const [contentUrl, setContentUrl] = useState(
     deliverable.contentUrl || ""
   );
@@ -526,9 +531,8 @@ function DeliverableCard({
   );
 
   const canEdit =
-    !disabled &&
-    deliverable.status !== "APPROVED";
-
+  !disabled &&
+  ["PENDING", "REJECTED"].includes(deliverable.status);
   const canSubmit =
     canEdit &&
     Boolean(contentUrl.trim());
@@ -636,7 +640,7 @@ function DeliverableCard({
             }
             disabled={!canEdit}
             rows={3}
-            placeholder="Añade información para ST.MARIA..."
+            placeholder="Añade información para ST.MARY AGENCY..."
             className="mt-2 w-full resize-none rounded-xl border border-black/10 px-4 py-3 text-sm outline-none transition placeholder:text-black/25 focus:border-black/30 disabled:bg-black/[0.02] disabled:text-black/40"
           />
 
@@ -668,22 +672,33 @@ function DeliverableCard({
 
         {deliverable.status === "APPROVED" && (
           <p className="mt-4 text-xs text-black/40">
-            Este contenido ha sido aprobado por ST.MARIA.
+            Este contenido ha sido aprobado por ST.MARY AGENCY.
           </p>
         )}
 
         {deliverable.status === "IN_REVIEW" && (
           <p className="mt-4 text-xs text-black/40">
-            El contenido está siendo revisado por ST.MARIA.
+            El contenido está siendo revisado por ST.MARY AGENCY.
           </p>
         )}
+        {deliverable.status === "SUBMITTED" && (
+  <p className="mt-4 text-xs text-black/40">
+    Has enviado este contenido a ST.MARY AGENCY. Está pendiente de revisión.
+  </p>
+)}
 
-        {deliverable.status === "REJECTED" && (
-          <p className="mt-4 text-xs text-black/40">
-            Este entregable necesita cambios antes de ser
-            aprobado.
-          </p>
-        )}
+       {deliverable.status === "REJECTED" && (
+  <div className="mt-5 rounded-xl border border-black/10 bg-black/[0.025] p-5">
+    <p className="text-[9px] uppercase tracking-[0.14em] text-black/35">
+      Cambios solicitados por ST.MARY AGENCY
+    </p>
+
+    <p className="mt-3 text-sm leading-relaxed text-black/65">
+      {latestRejectedReview?.feedback ||
+        "Este entregable necesita cambios antes de ser aprobado."}
+    </p>
+  </div>
+)}
 
       </div>
 

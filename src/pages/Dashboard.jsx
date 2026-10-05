@@ -2,21 +2,21 @@ function Dashboard() {
   const campaigns = [
     {
       name: "Campaña de verano",
-      brand: "ST.MARIA Demo",
+      brand: "ST.MARY AGENCY",
       creators: 12,
       progress: 72,
       status: "Activa",
     },
     {
       name: "Lanzamiento producto",
-      brand: "ST.MARIA Demo",
+      brand: "ST.MARY AGENCY",
       creators: 8,
       progress: 48,
       status: "En curso",
     },
     {
       name: "Campaña social",
-      brand: "ST.MARIA Demo",
+      brand: "ST.MARY AGENCY",
       creators: 5,
       progress: 24,
       status: "Preparación",
@@ -230,7 +230,7 @@ function Dashboard() {
         <div className="rounded-2xl bg-black p-7 text-white">
 
           <p className="text-[9px] uppercase tracking-[0.16em] text-white/35">
-            ST.MARIA
+            ST.MARY AGENCY
           </p>
 
           <h3 className="mt-3 text-2xl font-medium tracking-[-0.04em]">
@@ -238,7 +238,7 @@ function Dashboard() {
           </h3>
 
           <p className="mt-3 max-w-md text-sm leading-relaxed text-white/45">
-            Define tus objetivos y deja que ST.MARIA te ayude a encontrar
+            Define tus objetivos y deja que ST.MARY AGENCY te ayude a encontrar
             los creadores adecuados.
           </p>
 

@@ -1,8 +1,11 @@
 import { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import stmaryLogo from "./assets/brand/stmary-logo-horizontal-marron.svg";
+import stmaryLogoLight from "./assets/brand/stmary-logo-horizontal-crema.svg";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import Calculator from "./pages/Calculator";
 
 import Dashboard from "./pages/Dashboard";
 import DashboardLayout from "./components/DashboardLayout";
@@ -14,6 +17,8 @@ import CampaignCreators from "./pages/CampaignCreators";
 import CampaignEdit from "./pages/CampaignEdit";
 import AddCampaignCreator from "./pages/AddCampaignCreator";
 import CollaborationDetail from "./pages/CollaborationDetail";
+import Proposals from "./pages/Proposals";
+import CampaignProposals from "./pages/CampaignProposals";
 
 import CreatorDashboardLayout from "./components/CreatorDashboardLayout";
 import CreatorDashboard from "./pages/CreatorDashboard";
@@ -23,6 +28,8 @@ import CreatorPayments from "./pages/CreatorPayments";
 import Creators from "./pages/Creators";
 import CreatorDetail from "./pages/CreatorDetail";
 import CreatorCollaborationDetail from "./pages/CreatorCollaborationDetail";
+import CreatorOpportunities from "./pages/CreatorOpportunities";
+import CreatorApplications from "./pages/CreatorApplications";
 
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -31,11 +38,16 @@ import AdminDashboard from "./pages/AdminDashboard";
 import MetricVerification from "./pages/MetricVerification";
 import AdminBrands from "./pages/AdminBrands";
 import AdminBrandDetail from "./pages/AdminBrandDetail";
+import AdminNewBrand from "./pages/AdminNewBrand";
 import AdminCreators from "./pages/AdminCreators";
 import AdminCreatorDetail from "./pages/AdminCreatorDetail";
 import AdminCampaigns from "./pages/AdminCampaigns";
 import AdminCampaignDetail from "./pages/AdminCampaignDetail";
+import AdminCampaignEdit from "./pages/AdminCampaignEdit";
 import AdminFinance from "./pages/AdminFinance";
+import AdminNewCampaign from "./pages/AdminNewCampaign";
+import AdminCampaignManagement from "./pages/AdminCampaignManagement";
+import AdminCollaborationDetail from "./pages/AdminCollaborationDetail";
 
 const services = [
   {
@@ -68,97 +80,218 @@ const stats = [
 
 function Landing() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [registerOpen, setRegisterOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#f5f5f2] text-[#111111] selection:bg-[#111111] selection:text-white">
+    <div className="min-h-screen bg-[#F4EDE2] text-[#3E2B1B] selection:bg-[#8A6340] selection:text-white">
       
       {/* NAVBAR */}
-      <header className="fixed left-0 top-0 z-50 w-full border-b border-black/10 bg-[#f5f5f2]/90 backdrop-blur-xl">
-        <nav className="mx-auto flex max-w-[1500px] items-center justify-between px-6 py-5 md:px-10">
-          
-          <a
-            href="#"
-            className="text-xl font-semibold tracking-[-0.05em]"
-          >
-            ST.MARIA
-          </a>
+      <header className="fixed left-0 top-0 z-50 w-full border-b border-[#5A3E28]/10 bg-[#F4EDE2]/90 backdrop-blur-xl">
+  <nav className="mx-auto flex max-w-[1500px] items-center justify-between px-6 py-5 md:px-10">
+    
+    {/* LOGO */}
 
-          <div className="hidden items-center gap-8 text-[11px] font-medium uppercase tracking-[0.16em] md:flex">
-            <a href="#what-we-do" className="transition-opacity hover:opacity-50">
-              Qué hacemos
-            </a>
+    <a href="/">
+      <img
+        src={stmaryLogo}
+        alt="ST.MARY AGENCY"
+        className="h-9 w-auto object-contain"
+      />
+    </a>
 
-            <a href="#brands" className="transition-opacity hover:opacity-50">
-              Para marcas
-            </a>
+    {/* DESKTOP NAVIGATION */}
 
-            <a href="#creators" className="transition-opacity hover:opacity-50">
-              Para creadores
-            </a>
+    <div className="hidden items-center gap-6 text-[10px] font-medium uppercase tracking-[0.14em] lg:flex">
+      <a
+        href="#what-we-do"
+        className="transition-colors hover:text-[#8A6340]"
+      >
+        Qué hacemos
+      </a>
 
-            <a href="#about" className="transition-opacity hover:opacity-50">
-              Nosotros
-            </a>
-          </div>
+      <a
+        href="#brands"
+        className="transition-colors hover:text-[#8A6340]"
+      >
+        Para marcas
+      </a>
 
-        <div className="hidden items-center gap-3 md:flex">
+      <a
+        href="#creators"
+        className="transition-colors hover:text-[#8A6340]"
+      >
+        Para creadores
+      </a>
 
+      <a
+        href="#about"
+        className="transition-colors hover:text-[#8A6340]"
+      >
+        Nosotros
+      </a>
+
+      <a
+        href="/calculadora"
+        className="transition-colors hover:text-[#8A6340]"
+      >
+        Calculadora
+      </a>
+    </div>
+
+    {/* DESKTOP ACTIONS */}
+<div className="hidden items-center gap-3 lg:flex">
   <a
     href="#contact"
-    className="rounded-full border border-black/15 px-6 py-3 text-[10px] font-medium uppercase tracking-[0.16em] transition-colors hover:bg-black hover:text-white"
+    className="inline-flex items-center justify-center rounded-full border border-[#5A3E28]/20 px-5 py-3 text-[9px] font-medium uppercase tracking-[0.14em] transition-colors hover:bg-[#8A6340] hover:text-[#F4EDE2]"
   >
     Hablemos
   </a>
 
   <a
     href="/login"
-    className="rounded-full bg-[#111111] px-6 py-3 text-[10px] font-medium uppercase tracking-[0.16em] text-white transition-transform hover:scale-105"
+    className="inline-flex items-center justify-center rounded-full border border-[#8A6340] px-5 py-3 text-[9px] font-medium uppercase tracking-[0.14em] text-[#8A6340] transition-colors hover:bg-[#8A6340] hover:text-[#F4EDE2]"
   >
     Acceder
   </a>
 
-</div>
+  {/* REGISTER DROPDOWN */}
+  <div className="relative inline-flex">
+    <button
+      type="button"
+      onClick={() => setRegisterOpen((current) => !current)}
+      className="inline-flex items-center justify-center rounded-full border border-[#8A6340] px-5 py-3 text-[9px] font-medium uppercase tracking-[0.14em] text-[#8A6340] transition-colors hover:bg-[#8A6340] hover:text-[#F4EDE2]"
+    >
+      Crear cuenta
+    </button>
 
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-black/20 md:hidden"
-          >
-            <div className="space-y-1.5">
-              <span className="block h-px w-4 bg-black" />
-              <span className="block h-px w-4 bg-black" />
-            </div>
-          </button>
-        </nav>
+    {registerOpen && (
+      <div className="absolute right-0 top-full mt-3 w-64 overflow-hidden rounded-2xl border border-[#5A3E28]/10 bg-[#F4EDE2] p-2 shadow-xl z-50">
+        <a
+          href="/register?type=creator"
+          className="block rounded-xl px-4 py-4 transition-colors hover:bg-[#EBDCC4]"
+          onClick={() => setRegisterOpen(false)}
+        >
+          <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-[#3E2B1B]">
+            Cuenta de creador
+          </span>
+          <span className="mt-1 block text-xs text-[#6F6052]">
+            Únete como creador de contenido.
+          </span>
+        </a>
 
-        {menuOpen && (
-          <div className="border-t border-black/10 bg-[#f5f5f2] px-6 py-8 md:hidden">
-            <div className="flex flex-col gap-6 text-sm uppercase tracking-[0.12em]">
-              <a href="#what-we-do" onClick={() => setMenuOpen(false)}>
-                Qué hacemos
-              </a>
+        <a
+          href="/register?type=brand"
+          className="mt-1 block rounded-xl px-4 py-4 transition-colors hover:bg-[#EBDCC4]"
+          onClick={() => setRegisterOpen(false)}
+        >
+          <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-[#3E2B1B]">
+            Marca / Agencia
+          </span>
+          <span className="mt-1 block text-xs text-[#6F6052]">
+            Trabaja con ST.MARY AGENCY.
+          </span>
+        </a>
+      </div>
+    )}
+  </div>
+    </div>
 
-              <a href="#brands" onClick={() => setMenuOpen(false)}>
-                Para marcas
-              </a>
+    {/* MOBILE BUTTON */}
 
-              <a href="#creators" onClick={() => setMenuOpen(false)}>
-                Para creadores
-              </a>
+    <button
+      type="button"
+      onClick={() => setMenuOpen(!menuOpen)}
+      aria-label="Abrir menú"
+      className="flex h-10 w-10 items-center justify-center rounded-full border border-[#5A3E28]/20 lg:hidden"
+    >
+      <div className="space-y-1.5">
+        <span className="block h-px w-4 bg-[#8A6340]" />
+        <span className="block h-px w-4 bg-[#8A6340]" />
+      </div>
+    </button>
+  </nav>
 
-              <a href="#about" onClick={() => setMenuOpen(false)}>
-                Nosotros
-              </a>
+  {/* MOBILE MENU */}
 
-              <a href="#contact" onClick={() => setMenuOpen(false)}>
-               Hablemos
-              </a>
-              <a href="/login" onClick={() => setMenuOpen(false)}>
-                Acceder
-              </a>
-            </div>
+  {menuOpen && (
+    <div className="border-t border-[#5A3E28]/10 bg-[#F4EDE2] px-6 py-8 lg:hidden">
+      <div className="flex flex-col gap-6 text-sm uppercase tracking-[0.12em]">
+        <a
+          href="#what-we-do"
+          onClick={() => setMenuOpen(false)}
+        >
+          Qué hacemos
+        </a>
+
+        <a
+          href="#brands"
+          onClick={() => setMenuOpen(false)}
+        >
+          Para marcas
+        </a>
+
+        <a
+          href="#creators"
+          onClick={() => setMenuOpen(false)}
+        >
+          Para creadores
+        </a>
+
+        <a
+          href="#about"
+          onClick={() => setMenuOpen(false)}
+        >
+          Nosotros
+        </a>
+
+        <a
+          href="/calculadora"
+          onClick={() => setMenuOpen(false)}
+        >
+          Calculadora
+        </a>
+
+        <a
+          href="#contact"
+          onClick={() => setMenuOpen(false)}
+        >
+          Hablemos
+        </a>
+
+        <a
+          href="/login"
+          onClick={() => setMenuOpen(false)}
+        >
+          Acceder
+        </a>
+
+        <div className="border-t border-[#5A3E28]/10 pt-6">
+          <p className="mb-4 text-[9px] text-[#6F6052]">
+            Crear cuenta
+          </p>
+
+          <div className="grid gap-3">
+            <a
+              href="/register?type=creator"
+              onClick={() => setMenuOpen(false)}
+              className="rounded-xl border border-[#5A3E28]/15 px-4 py-4"
+            >
+              Cuenta de creador
+            </a>
+
+            <a
+              href="/register?type=brand"
+              onClick={() => setMenuOpen(false)}
+              className="rounded-xl bg-[#8A6340] px-4 py-4 text-[#F4EDE2]"
+            >
+              Marca / Agencia
+            </a>
           </div>
-        )}
-      </header>
+        </div>
+      </div>
+    </div>
+  )}
+</header>
 
       <main>
 
@@ -176,7 +309,7 @@ function Landing() {
               </div>
 
               <div className="hidden text-right text-[10px] uppercase tracking-[0.16em] text-black/50 md:block">
-                Madrid / Barcelona / España
+                España
               </div>
             </div>
 
@@ -201,9 +334,9 @@ function Landing() {
                   href="#what-we-do"
                   className="group flex items-center gap-4 text-[10px] font-medium uppercase tracking-[0.18em]"
                 >
-                  Descubre ST.MARIA
+                  Descubre ST.MARY AGENCY 
 
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-black/20 transition-all group-hover:bg-black group-hover:text-white">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-full border border-black/20 transition-all group-hover:bg-[#8A6340] group-hover:text-[#F4EDE2]">
                     ↓
                   </span>
                 </a>
@@ -213,7 +346,7 @@ function Landing() {
         </section>
 
         {/* MARQUEE */}
-        <section className="overflow-hidden border-y border-black/10 bg-[#111111] py-5 text-white">
+        <section className="overflow-hidden border-y border-black/10 bg-[#8A6340] py-5 text-white">
           <div className="flex w-max animate-marquee gap-10 whitespace-nowrap">
             {[
               "INFLUENCIA",
@@ -253,7 +386,7 @@ function Landing() {
               </h2>
 
               <p className="mt-10 max-w-2xl text-lg leading-relaxed text-black/55 md:text-xl">
-                ST.MARIA conecta marcas con las personas que dan forma a la
+                ST.MARY AGENCY  conecta marcas con las personas que dan forma a la
                 cultura. Combinamos estrategia, creatividad y tecnología para
                 crear campañas de influencer marketing auténticas y capaces
                 de generar resultados reales.
@@ -317,7 +450,7 @@ function Landing() {
         {/* BRANDS */}
         <section
           id="brands"
-          className="bg-[#111111] px-6 py-28 text-white md:px-10 md:py-40"
+          className="bg-[#8A6340] px-6 py-28 text-white md:px-10 md:py-40"
         >
           <div className="mx-auto max-w-[1500px]">
             
@@ -348,7 +481,7 @@ function Landing() {
 
                <a
   href="/login"
-  className="mt-10 inline-flex rounded-full border border-white/30 px-7 py-4 text-[10px] uppercase tracking-[0.18em] transition-colors hover:bg-white hover:text-black"
+  className="mt-10 inline-flex rounded-full border border-white/30 px-7 py-4 text-[10px] uppercase tracking-[0.18em] transition-colors hover:bg-[#F4EDE2] hover:text-[#5A3E28]"
 >
   Iniciar una campaña
 </a>
@@ -419,7 +552,7 @@ function Landing() {
 
               <a
   href="/login"
-  className="mt-10 inline-flex rounded-full bg-black px-7 py-4 text-[10px] uppercase tracking-[0.18em] text-white transition-transform hover:scale-105"
+  className="mt-10 inline-flex rounded-full bg-[#8A6340] px-7 py-4 text-[10px] uppercase tracking-[0.18em] text-white transition-transform hover:scale-105"
 >
   Únete a nuestra red de creadores
 </a>
@@ -428,7 +561,7 @@ function Landing() {
         </section>
 
         {/* TECHNOLOGY */}
-        <section className="border-y border-black/10 bg-[#deded9] px-6 py-28 md:px-10 md:py-40">
+        <section className="border-y border-black/10 bg-[#D8C3A5] px-6 py-28 md:px-10 md:py-40">
           <div className="mx-auto max-w-[1500px]">
             
             <div className="grid gap-16 md:grid-cols-12">
@@ -458,26 +591,26 @@ function Landing() {
             </div>
 
             {/* Dashboard preview */}
-            <div className="mt-20 overflow-hidden rounded-2xl border border-black/10 bg-[#f5f5f2] shadow-2xl">
+            <div className="mt-20 overflow-hidden rounded-2xl border border-black/10 bg-[#F4EDE2] shadow-2xl">
               
               <div className="flex items-center justify-between border-b border-black/10 px-5 py-4">
                 
                 <span className="text-xs font-semibold tracking-[-0.03em]">
-                  ST.MARIA / PLATFORM
+                  ST.MARY AGENCY / PLATFORM
                 </span>
 
                 <span className="text-[9px] uppercase tracking-[0.15em] text-black/40">
-                  Resumen de campaña
+                  Resumen de última campaña 
                 </span>
               </div>
 
               <div className="grid md:grid-cols-4">
                 
                 {[
-                  ["24", "Creadores"],
-                  ["1.24M", "Alcance"],
-                  ["83K", "Interacciones"],
-                  ["7.8%", "Engagement"],
+                  ["2", "Creadores"],
+                  ["6.5M", "Alcance"],
+                  ["17M", "Visualizaciones"],
+                  ["7K", "Likes"],
                 ].map(([value, label]) => (
                   <div
                     key={label}
@@ -514,7 +647,7 @@ function Landing() {
                       (height, index) => (
                         <div
                           key={index}
-                          className="flex-1 rounded-t-sm bg-black/80 transition-all hover:bg-black"
+                          className="flex-1 rounded-t-sm bg-[#5A3E28] transition-all hover:bg-[#5A3E28]"
                           style={{ height: `${height}%` }}
                         />
                       )
@@ -525,13 +658,12 @@ function Landing() {
                 <div className="p-7">
                   
                   <div className="mb-8 text-xs font-medium">
-                    Mejores creadores
+                    Numero de creadores
                   </div>
 
                   {[
                     ["@creator_one", "94% coincidencia"],
-                    ["@creator_two", "91% coincidencia"],
-                    ["@creator_three", "88% coincidencia"],
+                    ["@creator_two", "91% coincidencia"]
                   ].map(([name, match], index) => (
                     <div
                       key={name}
@@ -540,7 +672,7 @@ function Landing() {
                       
                       <div className="flex items-center gap-3">
                         
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-black text-[9px] text-white">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#8A6340] text-[9px] text-[#F4EDE2]">
                           0{index + 1}
                         </div>
 
@@ -604,7 +736,7 @@ function Landing() {
         {/* CTA */}
         <section
           id="contact"
-          className="bg-[#111111] px-6 py-28 text-white md:px-10 md:py-40"
+          className="bg-[#8A6340] px-6 py-28 text-white md:px-10 md:py-40"
         >
           <div className="mx-auto max-w-[1500px]">
             
@@ -629,12 +761,12 @@ function Landing() {
               </p>
 
               <a
-                href="mailto:hello@stmaria.agency"
+                href="mailto:info@stmaryagency.com"
                 className="group flex items-center gap-4 text-[10px] uppercase tracking-[0.18em]"
               >
-                hello@stmaria.agency
+                info@stmaryagency.com
 
-                <span className="flex h-12 w-12 items-center justify-center rounded-full border border-white/30 transition-all group-hover:bg-white group-hover:text-black">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full border border-white/30 transition-all group-hover:bg-[#F4EDE2] group-hover:text-[#5A3E28]">
                   ↗
                 </span>
               </a>
@@ -644,22 +776,28 @@ function Landing() {
       </main>
 
       {/* FOOTER */}
-      <footer className="bg-[#111111] px-6 pb-8 text-white md:px-10">
+      <footer className="bg-[#8A6340] px-6 pb-8 text-white md:px-10">
         <div className="mx-auto flex max-w-[1500px] flex-col justify-between gap-8 border-t border-white/10 pt-8 md:flex-row md:items-center">
           
           <div>
             <div className="text-xl font-semibold tracking-[-0.05em]">
-              ST.MARIA
+              ST.MARY AGENCY 
             </div>
+            
 
             <div className="mt-2 text-[9px] uppercase tracking-[0.16em] text-white/35">
               Influencer Marketing
             </div>
           </div>
+          <img
+  src={stmaryLogoLight}
+  alt="ST.MARY AGENCY"
+  className="h-12 w-auto object-contain"
+/>
 
           <div className="flex gap-6 text-[9px] uppercase tracking-[0.16em] text-white/40">
             
-            <a href="#" className="hover:text-white">
+            <a href="http://instagram.com/stmaryagency/" className="hover:text-white">
               Instagram
             </a>
 
@@ -673,7 +811,7 @@ function Landing() {
           </div>
 
           <div className="text-[9px] uppercase tracking-[0.16em] text-white/30">
-            © 2026 ST.MARIA AGENCY
+            © 2026 ST.MARY AGENCY 
           </div>
         </div>
       </footer>
@@ -695,6 +833,10 @@ function App() {
             path="/"
             element={<Landing />}
           />
+          <Route
+  path="/calculadora"
+  element={<Calculator />}
+/>
 
           {/* AUTENTICACIÓN */}
 
@@ -716,18 +858,45 @@ function App() {
           <Route index element={<AdminDashboard />} />
 
           <Route path="brands" element={<AdminBrands />} />
-          <Route path="brands/:id" element={<AdminBrandDetail />} />
+
+          <Route
+            path="brands/:id"
+            element={<AdminBrandDetail />}
+          />
+
+          <Route
+            path="brands/:brandId/campaigns/new"
+            element={<AdminNewCampaign />}
+          />
 
           <Route path="creators" element={<AdminCreators />} />
           <Route
             path="creators/:id"
             element={<AdminCreatorDetail />}
           />
+          <Route
+            path="/admin/brands/new"
+            element={<AdminNewBrand />}
+          />
            <Route path="campaigns" element={<AdminCampaigns />} />
           <Route
             path="campaigns/:id"
             element={<AdminCampaignDetail />}
           />
+          <Route
+            path="campaigns/:id/edit"
+            element={<AdminCampaignEdit />}
+          />
+          <Route
+  path="/admin/campaigns/:id/manage"
+  element={
+    <AdminCampaignManagement />
+  }
+/>
+<Route
+  path="/admin/campaigns/:campaignId/creators/:campaignCreatorId"
+  element={<AdminCollaborationDetail />}
+/>
           <Route path="finance" element={<AdminFinance />} />
           <Route
             path="metric-verification"
@@ -737,65 +906,157 @@ function App() {
       </Route>
 
           {/* =========================
-              MARCA
-          ========================== */}
+    MARCA
+========================== */}
 
-          <Route element={<ProtectedRoute allowedRoles={["BRAND"]} />}>
+<Route
+  element={
+    <ProtectedRoute allowedRoles={["BRAND"]} />
+  }
+>
+  <Route
+    path="/platform"
+    element={<DashboardLayout />}
+  >
+    {/* DASHBOARD */}
+    <Route
+      index
+      element={<Dashboard />}
+    />
 
-            <Route
-              path="/platform"
-              element={<DashboardLayout />}
-            >
+    {/* =====================
+        VER CAMPAÑAS
+    ====================== */}
 
-              <Route
-                index
-                element={<Dashboard />}
-              />
+    <Route
+      element={
+        <ProtectedRoute
+          allowedRoles={["BRAND"]}
+          permission="canViewCampaigns"
+        />
+      }
+    >
+      <Route
+        path="campaigns"
+        element={<Campaigns />}
+      />
 
-              <Route
-                path="campaigns"
-                element={<Campaigns />}
-              />
+      <Route
+        path="campaigns/:id"
+        element={<CampaignDetail />}
+      />
 
-              <Route
-                path="campaigns/new"
-                element={<NewCampaign />}
-              />
+      <Route
+        path="campaigns/:id/creators"
+        element={<CampaignCreators />}
+      />
 
-              <Route
-                path="campaigns/:id"
-                element={<CampaignDetail />}
-              />
-              <Route
-                path="creators"
-                element={<Creators />}
-              />
-              <Route
-                path="creators/:id"
-               element={<CreatorDetail />}
-              />
-              <Route
-                path="campaigns/:id/creators"
-                element={<CampaignCreators />}
-              />
-              <Route
-                path="campaigns/:campaignId/creators/:campaignCreatorId"
-                element={<CollaborationDetail />}
-              />
-              <Route
-                path="campaigns/:id/edit"
-                element={<CampaignEdit />}
-              />
-              <Route
-                path="campaigns/:id/creators/add"
-                element={<AddCampaignCreator />}
-              />
+      <Route
+        path="campaigns/:campaignId/creators/:campaignCreatorId"
+        element={<CollaborationDetail />}
+      />
+      <Route
+  element={
+    <ProtectedRoute
+      allowedRoles={["BRAND"]}
+      permission="canViewProposals"
+    />
+  }
+>
+ <Route
+  path="proposals"
+  element={<Proposals />}
+/>
 
-            </Route>
+<Route
+  path="proposals/:campaignId"
+  element={<CampaignProposals />}
+/>
+</Route>
+    </Route>
 
-          </Route>
+    {/* =====================
+        CREAR CAMPAÑAS
+    ====================== */}
 
+    <Route
+      element={
+        <ProtectedRoute
+          allowedRoles={["BRAND"]}
+          permission="canCreateCampaigns"
+        />
+      }
+    >
+      <Route
+        path="campaigns/new"
+        element={<NewCampaign />}
+      />
+    </Route>
 
+    {/* =====================
+        EDITAR CAMPAÑAS
+    ====================== */}
+
+    <Route
+      element={
+        <ProtectedRoute
+          allowedRoles={["BRAND"]}
+          permission="canEditCampaigns"
+        />
+      }
+    >
+      <Route
+        path="campaigns/:id/edit"
+        element={<CampaignEdit />}
+      />
+    </Route>
+
+    {/* =====================
+        DESCUBRIR CREADORES
+    ====================== */}
+
+    <Route
+      element={
+        <ProtectedRoute
+          allowedRoles={["BRAND"]}
+          permission="canDiscoverCreators"
+        />
+      }
+    >
+      <Route
+        path="creators"
+        element={<Creators />}
+      />
+    </Route>
+
+    {/* =====================
+        VER PERFIL CREADOR
+    ====================== */}
+
+    <Route
+      path="creators/:id"
+      element={<CreatorDetail />}
+    />
+
+    {/* =====================
+        SELECCIONAR CREADORES
+    ====================== */}
+
+    <Route
+      element={
+        <ProtectedRoute
+          allowedRoles={["BRAND"]}
+          permission="canSelectCreators"
+        />
+      }
+    >
+      <Route
+        path="campaigns/:id/creators/add"
+        element={<AddCampaignCreator />}
+      />
+    </Route>
+  </Route>
+</Route>
           {/* =========================
               CREADOR
           ========================== */}
@@ -815,6 +1076,14 @@ function App() {
               <Route
                 path="campaigns"
                 element={<CreatorCampaigns />}
+              />
+              <Route
+                path="applications"
+                element={<CreatorApplications />}
+              />
+              <Route
+                path="opportunities"
+                element={<CreatorOpportunities />}
               />
 
               <Route

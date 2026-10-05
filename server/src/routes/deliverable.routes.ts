@@ -6,132 +6,260 @@ import {
   type AuthenticatedRequest,
 } from "../middleware/auth.middleware.js";
 
-const router = Router();
 
+
+const router = Router();
 router.use(requireAuth);
 
-const validStatuses = [
+/*
+ * ==========================================
+ * CONSTANTS
+ * ==========================================
+ */
+
+const DELIVERABLE_STATUSES = [
   "PENDING",
   "SUBMITTED",
   "IN_REVIEW",
   "APPROVED",
   "REJECTED",
-];
+] as const;
 
-async function getBrandCollaboration(
-  req: AuthenticatedRequest,
-  campaignCreatorId: string
+type DeliverableStatusValue =
+  (typeof DELIVERABLE_STATUSES)[number];
+
+/*
+ * ==========================================
+ * HELPERS
+ * ==========================================
+ */
+
+function isStaff(
+  req: AuthenticatedRequest
 ) {
-  if (!req.user || req.user.role !== "BRAND") {
+  return req.user?.role === "STAFF";
+}
+
+function normalizeStatus(
+  value: unknown
+): DeliverableStatusValue | null {
+  if (!value) {
     return null;
   }
 
-  return prisma.campaignCreator.findFirst({
+  const normalized = String(value)
+    .trim()
+    .toUpperCase();
+
+  if (
+    DELIVERABLE_STATUSES.includes(
+      normalized as DeliverableStatusValue
+    )
+  ) {
+    return normalized as DeliverableStatusValue;
+  }
+
+  return null;
+}
+
+/*
+ * Obtiene una colaboración para STAFF.
+ *
+ * STAFF puede gestionar cualquier
+ * CampaignCreator de la plataforma.
+ */
+async function getStaffCollaboration(
+  campaignCreatorId: string
+) {
+  return prisma.campaignCreator.findUnique({
     where: {
       id: campaignCreatorId,
+    },
+
+    include: {
       campaign: {
-        brand: {
-          userId: req.user.id,
+        select: {
+          id: true,
+          name: true,
+          status: true,
+
+          brand: {
+            select: {
+              id: true,
+              companyName: true,
+            },
+          },
         },
       },
-    },
-    include: {
-      campaign: true,
+
       creator: {
         include: {
-          user: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      },
+
+      deliverables: {
+        include: {
+          reviews: {
+            include: {
+              createdBy: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+
+            orderBy: {
+              createdAt: "asc",
+            },
+          },
+        },
+
+        orderBy: {
+          createdAt: "asc",
         },
       },
     },
   });
 }
 
-/**
+/*
+ * ==========================================
  * GET /api/deliverables/collaboration/:campaignCreatorId
+ * ==========================================
+ *
+ * Devuelve los entregables de una colaboración.
+ *
+ * De momento esta ruta pertenece al
+ * backoffice de STAFF.
  */
 router.get(
   "/collaboration/:campaignCreatorId",
-  async (req: AuthenticatedRequest, res) => {
+  async (req, res) => {
     try {
+      const request =
+        req as AuthenticatedRequest;
+
+      if (!request.user) {
+        return res.status(401).json({
+          error: "UNAUTHENTICATED",
+        });
+      }
+
+      if (!isStaff(request)) {
+        return res.status(403).json({
+          error: "STAFF_ACCESS_REQUIRED",
+        });
+      }
+
       const campaignCreatorId = String(
         req.params.campaignCreatorId
       );
 
       const collaboration =
-        await getBrandCollaboration(
-          req,
+        await getStaffCollaboration(
           campaignCreatorId
         );
 
       if (!collaboration) {
         return res.status(404).json({
-          error: "COLLABORATION_NOT_FOUND",
+          error:
+            "CAMPAIGN_CREATOR_NOT_FOUND",
+          message:
+            "La colaboración no existe.",
         });
       }
 
-      const deliverables =
-        await prisma.deliverable.findMany({
-          where: {
-            campaignCreatorId,
-          },
-          include: {
-            reviews: {
-              orderBy: {
-                createdAt: "asc",
-              },
-              include: {
-                createdBy: {
-                  select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    role: true,
-                  },
-                },
-              },
-            },
-          },
-          orderBy: {
-            createdAt: "asc",
-          },
-        });
-
       return res.json({
-        deliverables,
+        collaboration,
+        deliverables:
+          collaboration.deliverables,
       });
     } catch (error) {
       console.error(
-        "Error fetching deliverables:",
+        "Get collaboration deliverables error:",
         error
       );
 
       return res.status(500).json({
-        error: "DELIVERABLES_FETCH_ERROR",
+        error:
+          "DELIVERABLES_FETCH_ERROR",
+        message:
+          "No se han podido cargar los entregables.",
       });
     }
   }
 );
 
-/**
+/*
+ * ==========================================
  * POST /api/deliverables/collaboration/:campaignCreatorId
+ * ==========================================
+ *
+ * STAFF crea un entregable para un creador
+ * dentro de una campaña.
  */
 router.post(
   "/collaboration/:campaignCreatorId",
-  async (req: AuthenticatedRequest, res) => {
+  async (req, res) => {
     try {
+      const request =
+        req as AuthenticatedRequest;
+
+      if (!request.user) {
+        return res.status(401).json({
+          error: "UNAUTHENTICATED",
+        });
+      }
+
+      if (!isStaff(request)) {
+        return res.status(403).json({
+          error: "STAFF_ACCESS_REQUIRED",
+        });
+      }
+
       const campaignCreatorId = String(
         req.params.campaignCreatorId
       );
 
       const collaboration =
-        await getBrandCollaboration(
-          req,
-          campaignCreatorId
-        );
+        await prisma.campaignCreator.findUnique({
+          where: {
+            id: campaignCreatorId,
+          },
+
+          select: {
+            id: true,
+
+            campaign: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+
+            creator: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+        });
 
       if (!collaboration) {
         return res.status(404).json({
-          error: "COLLABORATION_NOT_FOUND",
+          error:
+            "CAMPAIGN_CREATOR_NOT_FOUND",
+          message:
+            "La colaboración no existe.",
         });
       }
 
@@ -141,55 +269,130 @@ router.post(
         quantity,
         description,
         dueDate,
-      } = req.body;
+        contentUrl,
+        notes,
+      } = req.body ?? {};
 
-      if (!type || typeof type !== "string") {
+      /*
+       * TYPE
+       */
+
+      if (
+        !type ||
+        typeof type !== "string" ||
+        !type.trim()
+      ) {
         return res.status(400).json({
-          error: "TYPE_REQUIRED",
+          error:
+            "DELIVERABLE_TYPE_REQUIRED",
+          message:
+            "Indica el tipo de entregable.",
         });
       }
 
-      const parsedQuantity = Number(quantity || 1);
+      /*
+       * QUANTITY
+       */
+
+      const parsedQuantity =
+        quantity === undefined ||
+        quantity === null ||
+        quantity === ""
+          ? 1
+          : Number(quantity);
 
       if (
-        !Number.isInteger(parsedQuantity) ||
+        !Number.isInteger(
+          parsedQuantity
+        ) ||
         parsedQuantity < 1
       ) {
         return res.status(400).json({
-          error: "INVALID_QUANTITY",
+          error:
+            "INVALID_DELIVERABLE_QUANTITY",
+          message:
+            "La cantidad debe ser un número entero mayor que cero.",
         });
       }
 
-      let parsedDueDate: Date | undefined;
+      /*
+       * DUE DATE
+       */
+
+      let parsedDueDate:
+        | Date
+        | null = null;
 
       if (dueDate) {
-        parsedDueDate = new Date(dueDate);
+        parsedDueDate =
+          new Date(dueDate);
 
-        if (Number.isNaN(parsedDueDate.getTime())) {
+        if (
+          Number.isNaN(
+            parsedDueDate.getTime()
+          )
+        ) {
           return res.status(400).json({
-            error: "INVALID_DUE_DATE",
+            error:
+              "INVALID_DELIVERABLE_DUE_DATE",
+            message:
+              "La fecha límite no es válida.",
           });
         }
       }
+
+      /*
+       * CREATE
+       */
 
       const deliverable =
         await prisma.deliverable.create({
           data: {
             campaignCreatorId,
+
             type: type.trim(),
+
             platform:
-              typeof platform === "string" &&
-              platform.trim()
-                ? platform.trim()
+              platform &&
+              String(platform).trim()
+                ? String(
+                    platform
+                  ).trim()
                 : null,
-            quantity: parsedQuantity,
+
+            quantity:
+              parsedQuantity,
+
             description:
-              typeof description === "string" &&
-              description.trim()
-                ? description.trim()
+              description &&
+              String(description).trim()
+                ? String(
+                    description
+                  ).trim()
                 : null,
-            dueDate: parsedDueDate,
+
+            dueDate:
+              parsedDueDate,
+
+            status: "PENDING",
+
+            contentUrl:
+              contentUrl &&
+              String(contentUrl).trim()
+                ? String(
+                    contentUrl
+                  ).trim()
+                : null,
+
+            notes:
+              notes &&
+              String(notes).trim()
+                ? String(
+                    notes
+                  ).trim()
+                : null,
           },
+
           include: {
             reviews: true,
           },
@@ -197,13 +400,26 @@ router.post(
 
       await prisma.auditLog.create({
         data: {
-          userId: req.user?.id,
-          action: "DELIVERABLE_CREATED",
-          entity: "Deliverable",
-          entityId: deliverable.id,
+          userId:
+            request.user.id,
+
+          action:
+            "DELIVERABLE_CREATED",
+
+          entity:
+            "Deliverable",
+
+          entityId:
+            deliverable.id,
+
           metadata: {
             campaignCreatorId,
-            type: deliverable.type,
+            campaignId:
+              collaboration.campaign.id,
+            creatorId:
+              collaboration.creator.id,
+            type:
+              deliverable.type,
           },
         },
       });
@@ -213,51 +429,166 @@ router.post(
       });
     } catch (error) {
       console.error(
-        "Error creating deliverable:",
+        "Create deliverable error:",
         error
       );
 
       return res.status(500).json({
-        error: "DELIVERABLE_CREATE_ERROR",
+        error:
+          "DELIVERABLE_CREATION_ERROR",
+        message:
+          "No se ha podido crear el entregable.",
       });
     }
   }
 );
 
-/**
- * PATCH /api/deliverables/:id
+/*
+ * ==========================================
+ * GET /api/deliverables/:id
+ * ==========================================
  *
- * Uso principal por parte de BRAND.
+ * STAFF obtiene el detalle de un entregable.
  */
-router.patch(
+router.get(
   "/:id",
-  async (req: AuthenticatedRequest, res) => {
+  async (req, res) => {
     try {
-      const id = String(req.params.id);
+      const request =
+        req as AuthenticatedRequest;
 
-      if (!req.user || req.user.role !== "BRAND") {
-        return res.status(403).json({
-          error: "FORBIDDEN",
+      if (!request.user) {
+        return res.status(401).json({
+          error: "UNAUTHENTICATED",
         });
       }
 
-      const existing =
-        await prisma.deliverable.findFirst({
+      if (!isStaff(request)) {
+        return res.status(403).json({
+          error:
+            "STAFF_ACCESS_REQUIRED",
+        });
+      }
+
+      const deliverable =
+        await prisma.deliverable.findUnique({
           where: {
-            id,
-            campaignCreator: {
-              campaign: {
-                brand: {
-                  userId: req.user.id,
-                },
-              },
-            },
+            id: String(
+              req.params.id
+            ),
           },
+
           include: {
             campaignCreator: {
               include: {
-                campaign: true,
-                creator: true,
+                campaign: {
+                  include: {
+                    brand: {
+                      select: {
+                        id: true,
+                        companyName: true,
+                      },
+                    },
+                  },
+                },
+
+                creator: {
+                  include: {
+                    user: {
+                      select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+
+            reviews: {
+              include: {
+                createdBy: {
+                  select: {
+                    id: true,
+                    name: true,
+                  },
+                },
+              },
+
+              orderBy: {
+                createdAt: "asc",
+              },
+            },
+          },
+        });
+
+      if (!deliverable) {
+        return res.status(404).json({
+          error:
+            "DELIVERABLE_NOT_FOUND",
+        });
+      }
+
+      return res.json({
+        deliverable,
+      });
+    } catch (error) {
+      console.error(
+        "Get deliverable error:",
+        error
+      );
+
+      return res.status(500).json({
+        error:
+          "DELIVERABLE_FETCH_ERROR",
+      });
+    }
+  }
+);
+
+/*
+ * ==========================================
+ * PATCH /api/deliverables/:id
+ * ==========================================
+ *
+ * STAFF modifica y revisa un entregable.
+ */
+router.patch(
+  "/:id",
+  async (req, res) => {
+    try {
+      const request =
+        req as AuthenticatedRequest;
+
+      if (!request.user) {
+        return res.status(401).json({
+          error: "UNAUTHENTICATED",
+        });
+      }
+
+      if (!isStaff(request)) {
+        return res.status(403).json({
+          error:
+            "STAFF_ACCESS_REQUIRED",
+        });
+      }
+
+      const deliverableId =
+        String(req.params.id);
+
+      const existing =
+        await prisma.deliverable.findUnique({
+          where: {
+            id: deliverableId,
+          },
+
+          include: {
+            campaignCreator: {
+              select: {
+                id: true,
+                creatorId: true,
+                campaignId: true,
               },
             },
           },
@@ -265,7 +596,8 @@ router.patch(
 
       if (!existing) {
         return res.status(404).json({
-          error: "DELIVERABLE_NOT_FOUND",
+          error:
+            "DELIVERABLE_NOT_FOUND",
         });
       }
 
@@ -279,258 +611,587 @@ router.patch(
         contentUrl,
         notes,
         feedback,
-      } = req.body;
+      } = req.body ?? {};
 
+      /*
+       * ==========================================
+       * STATUS
+       * ==========================================
+       */
+
+      let normalizedStatus:
+        | DeliverableStatusValue
+        | undefined;
+
+      if (status !== undefined) {
+        const parsedStatus =
+          normalizeStatus(status);
+
+        if (!parsedStatus) {
+          return res.status(400).json({
+            error:
+              "INVALID_DELIVERABLE_STATUS",
+            message:
+              "El estado del entregable no es válido.",
+          });
+        }
+
+        normalizedStatus =
+          parsedStatus;
+      }
+
+      /*
+       * IMPORTANTE:
+       *
+       * Validamos feedback ANTES de modificar
+       * el Deliverable.
+       */
       if (
-        status !== undefined &&
-        !validStatuses.includes(status)
+        normalizedStatus ===
+          "REJECTED" &&
+        (
+          !feedback ||
+          typeof feedback !==
+            "string" ||
+          !feedback.trim()
+        )
       ) {
         return res.status(400).json({
-          error: "INVALID_STATUS",
+          error:
+            "FEEDBACK_REQUIRED",
+          message:
+            "Debes indicar qué cambios debe realizar el creador.",
         });
       }
 
-      if (
-        quantity !== undefined &&
-        (!Number.isInteger(Number(quantity)) ||
-          Number(quantity) < 1)
-      ) {
-        return res.status(400).json({
-          error: "INVALID_QUANTITY",
-        });
+      /*
+       * ==========================================
+       * QUANTITY
+       * ==========================================
+       */
+
+      let parsedQuantity:
+        | number
+        | undefined;
+
+      if (quantity !== undefined) {
+        parsedQuantity =
+          Number(quantity);
+
+        if (
+          !Number.isInteger(
+            parsedQuantity
+          ) ||
+          parsedQuantity < 1
+        ) {
+          return res.status(400).json({
+            error:
+              "INVALID_DELIVERABLE_QUANTITY",
+          });
+        }
       }
+
+      /*
+       * ==========================================
+       * DUE DATE
+       * ==========================================
+       */
 
       let parsedDueDate:
         | Date
         | null
-        | undefined = undefined;
+        | undefined;
 
       if (dueDate !== undefined) {
-        if (!dueDate) {
+        if (
+          dueDate === null ||
+          dueDate === ""
+        ) {
           parsedDueDate = null;
         } else {
-          const date = new Date(dueDate);
+          parsedDueDate =
+            new Date(dueDate);
 
-          if (Number.isNaN(date.getTime())) {
+          if (
+            Number.isNaN(
+              parsedDueDate.getTime()
+            )
+          ) {
             return res.status(400).json({
-              error: "INVALID_DUE_DATE",
+              error:
+                "INVALID_DELIVERABLE_DUE_DATE",
             });
           }
-
-          parsedDueDate = date;
         }
       }
-
-      const nextStatus =
-        status !== undefined
-          ? status
-          : existing.status;
-
-      const updateData: any = {
-        type:
-          type !== undefined
-            ? String(type).trim()
-            : undefined,
-
-        platform:
-          platform !== undefined
-            ? platform
-              ? String(platform).trim()
-              : null
-            : undefined,
-
-        quantity:
-          quantity !== undefined
-            ? Number(quantity)
-            : undefined,
-
-        description:
-          description !== undefined
-            ? description
-              ? String(description).trim()
-              : null
-            : undefined,
-
-        dueDate: parsedDueDate,
-
-        contentUrl:
-          contentUrl !== undefined
-            ? contentUrl
-              ? String(contentUrl).trim()
-              : null
-            : undefined,
-
-        notes:
-          notes !== undefined
-            ? notes
-              ? String(notes).trim()
-              : null
-            : undefined,
-
-        status: nextStatus,
-      };
-
-      if (nextStatus === "APPROVED") {
-        updateData.approvedAt =
-          existing.approvedAt || new Date();
-      }
-
-      if (
-        nextStatus !== "APPROVED" &&
-        status !== undefined
-      ) {
-        updateData.approvedAt = null;
-      }
-
-      if (nextStatus === "SUBMITTED") {
-        updateData.submittedAt =
-          existing.submittedAt || new Date();
-      }
-
-      const deliverable =
-        await prisma.deliverable.update({
-          where: {
-            id,
-          },
-          data: updateData,
-          include: {
-            reviews: {
-              orderBy: {
-                createdAt: "asc",
-              },
-              include: {
-                createdBy: {
-                  select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    role: true,
-                  },
-                },
-              },
-            },
-          },
-        });
 
       /*
-       * Si la marca solicita cambios,
-       * creamos una revisión.
+       * ==========================================
+       * UPDATE + REVIEW
+       * ==========================================
        */
-      if (nextStatus === "REJECTED") {
-        const cleanFeedback =
-          typeof feedback === "string"
-            ? feedback.trim()
-            : "";
 
-        if (!cleanFeedback) {
-          return res.status(400).json({
-            error: "FEEDBACK_REQUIRED",
-            message:
-              "Debes indicar qué cambios debe realizar el creador.",
-          });
-        }
+      const updated =
+        await prisma.$transaction(
+          async (tx) => {
+            const data: any = {};
 
-        await prisma.deliverableReview.create({
-          data: {
-            deliverableId: id,
-            status: "REJECTED",
-            feedback: cleanFeedback,
-            createdById: req.user.id,
-          },
-        });
+            if (type !== undefined) {
+              if (
+                typeof type !==
+                  "string" ||
+                !type.trim()
+              ) {
+                throw new Error(
+                  "DELIVERABLE_TYPE_REQUIRED"
+                );
+              }
 
-        await prisma.deliverable.update({
-          where: {
-            id,
-          },
-          data: {
-            revisionCount: {
-              increment: 1,
-            },
-          },
-        });
-      }
+              data.type =
+                type.trim();
+            }
 
-      if (nextStatus === "IN_REVIEW") {
-        const cleanFeedback =
-          typeof feedback === "string"
-            ? feedback.trim()
-            : "";
+            if (
+              platform !== undefined
+            ) {
+              data.platform =
+                platform === null ||
+                platform === ""
+                  ? null
+                  : String(
+                      platform
+                    ).trim() ||
+                    null;
+            }
 
-        if (cleanFeedback) {
-          await prisma.deliverableReview.create({
-            data: {
-              deliverableId: id,
-              status: "IN_REVIEW",
-              feedback: cleanFeedback,
-              createdById: req.user.id,
-            },
-          });
-        }
-      }
+            if (
+              parsedQuantity !==
+              undefined
+            ) {
+              data.quantity =
+                parsedQuantity;
+            }
 
-      if (nextStatus === "APPROVED") {
-        await prisma.deliverableReview.create({
-          data: {
-            deliverableId: id,
-            status: "APPROVED",
-            feedback:
-              typeof feedback === "string" &&
-              feedback.trim()
-                ? feedback.trim()
-                : "Entregable aprobado.",
-            createdById: req.user.id,
-          },
-        });
-      }
+            if (
+              description !==
+              undefined
+            ) {
+              data.description =
+                description === null ||
+                description === ""
+                  ? null
+                  : String(
+                      description
+                    ).trim() ||
+                    null;
+            }
 
-      const finalDeliverable =
-        await prisma.deliverable.findUnique({
-          where: {
-            id,
-          },
-          include: {
-            reviews: {
-              orderBy: {
-                createdAt: "asc",
+            if (
+              parsedDueDate !==
+              undefined
+            ) {
+              data.dueDate =
+                parsedDueDate;
+            }
+
+            if (
+              contentUrl !==
+              undefined
+            ) {
+              data.contentUrl =
+                contentUrl === null ||
+                contentUrl === ""
+                  ? null
+                  : String(
+                      contentUrl
+                    ).trim() ||
+                    null;
+            }
+
+            if (
+              notes !== undefined
+            ) {
+              data.notes =
+                notes === null ||
+                notes === ""
+                  ? null
+                  : String(
+                      notes
+                    ).trim() ||
+                    null;
+            }
+
+            /*
+             * STATUS TIMESTAMPS
+             */
+
+            if (
+              normalizedStatus !==
+              undefined
+            ) {
+              data.status =
+                normalizedStatus;
+
+              if (
+                normalizedStatus ===
+                "SUBMITTED"
+              ) {
+                data.submittedAt =
+                  new Date();
+
+                data.approvedAt =
+                  null;
+              }
+
+              if (
+                normalizedStatus ===
+                "IN_REVIEW"
+              ) {
+                if (
+                  !existing.submittedAt
+                ) {
+                  data.submittedAt =
+                    new Date();
+                }
+
+                data.approvedAt =
+                  null;
+              }
+
+              if (
+                normalizedStatus ===
+                "APPROVED"
+              ) {
+                data.approvedAt =
+                  new Date();
+              }
+
+              if (
+                normalizedStatus ===
+                "REJECTED"
+              ) {
+                data.approvedAt =
+                  null;
+
+                data.revisionCount = {
+                  increment: 1,
+                };
+              }
+
+              if (
+                normalizedStatus ===
+                "PENDING"
+              ) {
+                data.approvedAt =
+                  null;
+              }
+            }
+
+            const deliverable =
+              await tx.deliverable.update({
+                where: {
+                  id: deliverableId,
+                },
+
+                data,
+
+                include: {
+                  reviews: {
+                    include: {
+                      createdBy: {
+                        select: {
+                          id: true,
+                          name: true,
+                        },
+                      },
+                    },
+
+                    orderBy: {
+                      createdAt:
+                        "asc",
+                    },
+                  },
+                },
+              });
+
+            /*
+             * ======================================
+             * REVIEW HISTORY
+             * ======================================
+             */
+
+            if (
+              normalizedStatus ===
+              "REJECTED"
+            ) {
+              await tx.deliverableReview.create({
+                data: {
+                  deliverableId,
+
+                  status:
+                    "REJECTED",
+
+                  feedback:
+                    feedback.trim(),
+
+                  createdById:
+                    request.user!.id,
+                },
+              });
+            }
+
+            if (
+              normalizedStatus ===
+              "APPROVED"
+            ) {
+              await tx.deliverableReview.create({
+                data: {
+                  deliverableId,
+
+                  status:
+                    "APPROVED",
+
+                  feedback:
+                    typeof feedback ===
+                      "string"
+                      ? feedback.trim()
+                      : "",
+
+                  createdById:
+                    request.user!.id,
+                },
+              });
+            }
+
+            if (
+              normalizedStatus ===
+              "IN_REVIEW"
+            ) {
+              await tx.deliverableReview.create({
+                data: {
+                  deliverableId,
+
+                  status:
+                    "IN_REVIEW",
+
+                  feedback:
+                    typeof feedback ===
+                      "string"
+                      ? feedback.trim()
+                      : "",
+
+                  createdById:
+                    request.user!.id,
+                },
+              });
+            }
+
+            /*
+             * AUDIT
+             */
+
+            await tx.auditLog.create({
+              data: {
+                userId:
+                  request.user!.id,
+
+                action:
+                  "DELIVERABLE_UPDATED",
+
+                entity:
+                  "Deliverable",
+
+                entityId:
+                  deliverableId,
+
+                metadata: {
+                  campaignId:
+                    existing
+                      .campaignCreator
+                      .campaignId,
+
+                  creatorId:
+                    existing
+                      .campaignCreator
+                      .creatorId,
+
+                  previousStatus:
+                    existing.status,
+
+                  status:
+                    normalizedStatus ??
+                    existing.status,
+                },
               },
+            });
+
+            /*
+             * Recargamos para incluir
+             * la review recién creada.
+             */
+
+            return tx.deliverable.findUnique({
+              where: {
+                id: deliverableId,
+              },
+
               include: {
-                createdBy: {
-                  select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    role: true,
+                reviews: {
+                  include: {
+                    createdBy: {
+                      select: {
+                        id: true,
+                        name: true,
+                      },
+                    },
+                  },
+
+                  orderBy: {
+                    createdAt:
+                      "asc",
                   },
                 },
               },
-            },
-          },
-        });
-
-      await prisma.auditLog.create({
-        data: {
-          userId: req.user.id,
-          action: "DELIVERABLE_UPDATED",
-          entity: "Deliverable",
-          entityId: id,
-          metadata: {
-            status: nextStatus,
-          },
-        },
-      });
+            });
+          }
+        );
 
       return res.json({
-        deliverable: finalDeliverable,
+        deliverable: updated,
       });
     } catch (error) {
       console.error(
-        "Error updating deliverable:",
+        "Update deliverable error:",
+        error
+      );
+
+      if (
+        error instanceof Error &&
+        error.message ===
+          "DELIVERABLE_TYPE_REQUIRED"
+      ) {
+        return res.status(400).json({
+          error:
+            "DELIVERABLE_TYPE_REQUIRED",
+        });
+      }
+
+      return res.status(500).json({
+        error:
+          "DELIVERABLE_UPDATE_ERROR",
+        message:
+          "No se ha podido actualizar el entregable.",
+      });
+    }
+  }
+);
+
+/*
+ * ==========================================
+ * DELETE /api/deliverables/:id
+ * ==========================================
+ *
+ * STAFF elimina un entregable.
+ */
+router.delete(
+  "/:id",
+  async (req, res) => {
+    try {
+      const request =
+        req as AuthenticatedRequest;
+
+      if (!request.user) {
+        return res.status(401).json({
+          error: "UNAUTHENTICATED",
+        });
+      }
+
+      if (!isStaff(request)) {
+        return res.status(403).json({
+          error:
+            "STAFF_ACCESS_REQUIRED",
+        });
+      }
+
+      const deliverableId =
+        String(req.params.id);
+
+      const deliverable =
+        await prisma.deliverable.findUnique({
+          where: {
+            id: deliverableId,
+          },
+
+          include: {
+            campaignCreator: {
+              select: {
+                campaignId: true,
+                creatorId: true,
+              },
+            },
+          },
+        });
+
+      if (!deliverable) {
+        return res.status(404).json({
+          error:
+            "DELIVERABLE_NOT_FOUND",
+        });
+      }
+
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.deliverable.delete({
+            where: {
+              id: deliverableId,
+            },
+          });
+
+          await tx.auditLog.create({
+            data: {
+              userId:
+                request.user!.id,
+
+              action:
+                "DELIVERABLE_DELETED",
+
+              entity:
+                "Deliverable",
+
+              entityId:
+                deliverableId,
+
+              metadata: {
+                campaignId:
+                  deliverable
+                    .campaignCreator
+                    .campaignId,
+
+                creatorId:
+                  deliverable
+                    .campaignCreator
+                    .creatorId,
+
+                type:
+                  deliverable.type,
+              },
+            },
+          });
+        }
+      );
+
+      return res.json({
+        success: true,
+      });
+    } catch (error) {
+      console.error(
+        "Delete deliverable error:",
         error
       );
 
       return res.status(500).json({
-        error: "DELIVERABLE_UPDATE_ERROR",
+        error:
+          "DELIVERABLE_DELETE_ERROR",
       });
     }
   }

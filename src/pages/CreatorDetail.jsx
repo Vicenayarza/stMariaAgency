@@ -185,7 +185,7 @@ function CreatorDetail() {
           <div className="rounded-2xl bg-black p-6 text-white md:min-w-[220px]">
 
             <p className="text-[9px] uppercase tracking-[0.16em] text-white/35">
-              ST.MARIA Match
+              ST.MARY AGENCY Match
             </p>
 
             <p className="mt-3 text-4xl font-medium tracking-[-0.06em]">

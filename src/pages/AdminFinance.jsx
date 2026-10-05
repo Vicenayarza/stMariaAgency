@@ -140,7 +140,7 @@ function AdminFinance() {
         <p className="mt-3 max-w-2xl text-sm leading-6 text-black/45">
           Control operativo de presupuestos, fees de creadores y
           margen estimado de las campañas gestionadas por
-          ST.MARIA.
+          ST.MARY AGENCY.
         </p>
       </div>
 
@@ -335,7 +335,7 @@ function AdminFinance() {
 
         <p className="mt-2 max-w-4xl text-xs leading-6 text-black/45">
           Estos datos representan el control financiero operativo
-          interno de ST.MARIA. El sistema de facturación, cobros de
+          interno de ST.MARY AGENCY . El sistema de facturación, cobros de
           clientes, pagos a creadores, Stripe, impuestos y
           conciliación bancaria se incorporarán posteriormente.
         </p>

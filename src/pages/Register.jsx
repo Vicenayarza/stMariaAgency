@@ -1,5 +1,9 @@
 import { useState } from "react";
 import { Link, useSearchParams, useNavigate } from "react-router-dom";
+import stmaryLogo from "../assets/brand/stmary-logo-horizontal-marron.svg";
+import stmaryLogoLight from "../assets/brand/stmary-logo-horizontal-crema.svg";
+import CreatorRegisterFields from "../components/auth/CreatorRegisterFields";
+import BrandRegisterFields from "../components/auth/BrandRegisterFields";
 
 import { apiFetch } from "../lib/api";
 
@@ -15,26 +19,49 @@ function Register() {
   const [type, setType] = useState(initialType);
 
   const [form, setForm] = useState({
-    name: "",
-    email: "",
-    password: "",
-    companyName: "",
-    username: "",
-  });
+  // Comunes
+  name: "",
+  lastName: "",
+  email: "",
+  country: "",
+
+  // Creator
+  password: "",
+  confirmPassword: "",
+  username:"",
+  invitationCode: "",
+  privacyAccepted: false,
+
+  // Brand / Agency
+  companyName: "",
+  website: "",
+  phone: "",
+  employeeCount: "",
+  services: "",
+  needs: "",
+  discoverySource: "",
+});
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   const handleChange = (event) => {
-    const { name, value } = event.target;
+  const {
+    name,
+    value,
+    type: inputType,
+    checked,
+  } = event.target;
 
-    setForm((current) => ({
-      ...current,
-      [name]: value,
-    }));
-  };
-
+  setForm((current) => ({
+    ...current,
+    [name]:
+      inputType === "checkbox"
+        ? checked
+        : value,
+  }));
+};
   const handleTypeChange = (newType) => {
     setType(newType);
     setError("");
@@ -128,22 +155,23 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f2] text-[#111111]">
+    <div className="min-h-screen bg-[#F4EDE2] text-[#3E2B1B]">
 
       <div className="grid min-h-screen md:grid-cols-2">
 
         {/* LEFT */}
 
-        <div className="hidden bg-[#111111] p-10 text-white md:flex md:flex-col md:justify-between">
+        <div className="hidden bg-[#8A6340] p-10 text-[#F4EDE2] md:flex md:flex-col md:justify-between">
 
           <div>
 
-            <Link
-              to="/"
-              className="text-xl font-semibold tracking-[-0.05em]"
-            >
-              ST.MARIA
-            </Link>
+            <Link to="/">
+  <img
+    src={stmaryLogoLight}
+    alt="ST.MARY AGENCY"
+    className="h-12 w-auto"
+  />
+</Link>
 
             <p className="mt-2 text-[9px] uppercase tracking-[0.16em] text-white/35">
               Platform
@@ -155,7 +183,7 @@ function Register() {
           <div>
 
             <p className="text-[10px] uppercase tracking-[0.18em] text-white/40">
-              Únete a ST.MARIA
+              Únete a ST.MARY AGENCY
             </p>
 
             <h1 className="mt-6 max-w-xl text-7xl font-medium leading-[0.88] tracking-[-0.06em]">
@@ -179,7 +207,7 @@ function Register() {
 
 
           <div className="text-[9px] uppercase tracking-[0.16em] text-white/30">
-            © 2026 ST.MARIA AGENCY
+            © 2026 ST.MARY AGENCY
           </div>
 
         </div>
@@ -195,13 +223,13 @@ function Register() {
 
             <div className="mb-10 md:hidden">
 
-              <Link
-                to="/"
-                className="text-xl font-semibold tracking-[-0.05em]"
-              >
-                ST.MARIA
-              </Link>
-
+              <Link to="/">
+  <img
+    src={stmaryLogo}
+    alt="ST.MARY AGENCY"
+    className="h-11 w-auto"
+  />
+</Link>
             </div>
 
 
@@ -216,7 +244,7 @@ function Register() {
             </h2>
 
             <p className="mt-4 text-sm leading-relaxed text-black/50">
-              Elige cómo quieres formar parte de ST.MARIA.
+              Elige cómo quieres formar parte de ST.MARY AGENCY.
             </p>
 
 
@@ -229,8 +257,8 @@ function Register() {
                 onClick={() => handleTypeChange("brand")}
                 className={`rounded-xl border p-5 text-left transition-all ${
                   type === "brand"
-                    ? "border-black bg-black text-white"
-                    : "border-black/10 hover:border-black/30"
+                     ? "border-[#8A6340] bg-[#8A6340] text-[#F4EDE2]"
+                     : "border-[#5A3E28]/15 hover:border-[#8A6340]/50"
                 }`}
               >
 
@@ -254,8 +282,8 @@ function Register() {
                 onClick={() => handleTypeChange("creator")}
                 className={`rounded-xl border p-5 text-left transition-all ${
                   type === "creator"
-                    ? "border-black bg-black text-white"
-                    : "border-black/10 hover:border-black/30"
+                     ? "border-[#8A6340] bg-[#8A6340] text-[#F4EDE2]"
+                     : "border-[#5A3E28]/15 hover:border-[#8A6340]/50"
                 }`}
               >
 
@@ -283,136 +311,17 @@ function Register() {
               className="mt-8"
             >
 
-              {/* NAME */}
-
-              <div>
-
-                <label
-                  htmlFor="name"
-                  className="text-[9px] uppercase tracking-[0.16em] text-black/40"
-                >
-                  {type === "brand"
-                    ? "Persona de contacto"
-                    : "Nombre"}
-                </label>
-
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  value={form.name}
-                  onChange={handleChange}
-                  placeholder={
-                    type === "brand"
-                      ? "Nombre de contacto"
-                      : "Tu nombre"
-                  }
-                  required
-                  autoComplete="name"
-                  className="mt-2 w-full rounded-xl border border-black/10 bg-transparent px-5 py-4 text-sm outline-none transition-colors placeholder:text-black/25 focus:border-black/40"
-                />
-
-              </div>
-
-
-              {/* COMPANY / USERNAME */}
-
-              <div className="mt-5">
-
-                <label
-                  htmlFor={
-                    type === "brand"
-                      ? "companyName"
-                      : "username"
-                  }
-                  className="text-[9px] uppercase tracking-[0.16em] text-black/40"
-                >
-                  {type === "brand"
-                    ? "Empresa"
-                    : "Nombre de usuario"}
-                </label>
-
-                <input
-                  id={
-                    type === "brand"
-                      ? "companyName"
-                      : "username"
-                  }
-                  name={
-                    type === "brand"
-                      ? "companyName"
-                      : "username"
-                  }
-                  type="text"
-                  value={
-                    type === "brand"
-                      ? form.companyName
-                      : form.username
-                  }
-                  onChange={handleChange}
-                  placeholder={
-                    type === "brand"
-                      ? "Nombre de la empresa"
-                      : "@tuusuario"
-                  }
-                  required
-                  className="mt-2 w-full rounded-xl border border-black/10 bg-transparent px-5 py-4 text-sm outline-none transition-colors placeholder:text-black/25 focus:border-black/40"
-                />
-
-              </div>
-
-
-              {/* EMAIL */}
-
-              <div className="mt-5">
-
-                <label
-                  htmlFor="email"
-                  className="text-[9px] uppercase tracking-[0.16em] text-black/40"
-                >
-                  Email
-                </label>
-
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={form.email}
-                  onChange={handleChange}
-                  placeholder="tu@email.com"
-                  required
-                  autoComplete="email"
-                  className="mt-2 w-full rounded-xl border border-black/10 bg-transparent px-5 py-4 text-sm outline-none transition-colors placeholder:text-black/25 focus:border-black/40"
-                />
-
-              </div>
-
-
-              {/* PASSWORD */}
-
-              <div className="mt-5">
-
-                <label
-                  htmlFor="password"
-                  className="text-[9px] uppercase tracking-[0.16em] text-black/40"
-                >
-                  Contraseña
-                </label>
-
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={form.password}
-                  onChange={handleChange}
-                  placeholder="Mínimo 8 caracteres"
-                  required
-                  minLength={8}
-                  autoComplete="new-password"
-                  className="mt-2 w-full rounded-xl border border-black/10 bg-transparent px-5 py-4 text-sm outline-none transition-colors placeholder:text-black/25 focus:border-black/40"
-                />
-
-              </div>
+             {type === "creator" ? (
+  <CreatorRegisterFields
+    form={form}
+    handleChange={handleChange}
+  />
+) : (
+  <BrandRegisterFields
+    form={form}
+    handleChange={handleChange}
+  />
+)}
 
 
               {/* ERROR */}

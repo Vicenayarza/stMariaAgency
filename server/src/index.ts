@@ -59,6 +59,6 @@ app.use("/api/admin", adminRoutes);
 
 app.listen(PORT, () => {
   console.log(
-    `ST.MARIA API running on http://localhost:${PORT}`
+    `ST.MARY AGENCY API running on http://localhost:${PORT}`
   );
 });

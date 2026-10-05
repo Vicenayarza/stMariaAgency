@@ -51,7 +51,7 @@ function AdminDashboardLayout() {
               to="/admin"
               className="text-xl font-semibold tracking-[-0.05em]"
             >
-              ST.MARIA
+              ST.MARY AGENCY 
             </Link>
 
             <p className="mt-2 text-[9px] uppercase tracking-[0.16em] text-white/35">
@@ -63,7 +63,7 @@ function AdminDashboardLayout() {
           <div className="border-b border-white/10 px-7 py-5">
 
             <p className="text-sm font-medium">
-              {user?.name || "ST.MARIA"}
+              {user?.name || "ST.MARY AGENCY "}
             </p>
 
             <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-white/35">
@@ -125,7 +125,7 @@ function AdminDashboardLayout() {
           <div>
 
             <p className="text-[9px] uppercase tracking-[0.16em] text-black/35">
-              ST.MARIA Agency
+              ST.MARY AGENCY 
             </p>
 
             <p className="mt-1 text-sm font-medium">

@@ -1723,7 +1723,7 @@ export default function CollaborationDetail() {
             <p className="mt-5 text-xs leading-5 text-gray-400">
               El importe disponible es presupuesto
               restante de la campaña. No representa
-              beneficio neto de ST.MARIA.
+              beneficio neto de ST.MARY AGENCY.
             </p>
           </section>
 

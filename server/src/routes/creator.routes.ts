@@ -13,6 +13,15 @@ import {
 } from "../services/creator.service.js";
 
 const router = Router();
+function getBrandMembership(
+  user: NonNullable<AuthenticatedRequest["user"]>
+) {
+  if (user.role !== "BRAND") {
+    return null;
+  }
+
+  return user.brandMemberships?.[0] ?? null;
+}
 
 router.use(requireAuth);
 
@@ -500,14 +509,28 @@ router.post(
         });
       }
 
-      if (
-        user.role !== "BRAND" ||
-        !user.brand
-      ) {
-        return res.status(403).json({
-          error: "FORBIDDEN",
-        });
-      }
+      if (user.role !== "BRAND") {
+  return res.status(403).json({
+    error: "FORBIDDEN",
+  });
+}
+
+const membership = getBrandMembership(user);
+
+if (!membership) {
+  return res.status(403).json({
+    error: "BRAND_MEMBERSHIP_REQUIRED",
+  });
+}
+
+if (
+  membership.brand.accessMode !== "SELF_MANAGED" ||
+  !membership.canSelectCreators
+) {
+  return res.status(403).json({
+    error: "BRAND_PERMISSION_DENIED",
+  });
+}
 
       const creator =
         await prisma.creator.findUnique({
@@ -526,7 +549,7 @@ router.post(
         await prisma.campaign.findFirst({
           where: {
             id: req.params.campaignId,
-            brandId: user.brand.id,
+             brandId: membership.brandId,
           },
         });
 

@@ -37,7 +37,7 @@ function Sidebar() {
         <div className="border-b border-black/10 px-7 py-6">
 
           <div className="text-xl font-semibold tracking-[-0.05em]">
-            ST.MARIA
+            ST.MARY AGENCY 
           </div>
 
           <div className="mt-1 text-[9px] uppercase tracking-[0.16em] text-black/40">

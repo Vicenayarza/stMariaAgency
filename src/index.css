@@ -1,9 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap');
 
 @import "tailwindcss";
 
 :root {
-  font-family: 'DM Sans', sans-serif;
+  /* ST.MARY AGENCY — Brand colors */
+  --st-cream: #F4EDE2;
+  --st-white: #FFFFFF;
+  --st-caramel: #8A6340;
+  --st-champagne: #EBDCC4;
+  --st-sand: #D8C3A5;
+  --st-gold: #A9825A;
+  --st-light-caramel: #A07A55;
+  --st-brown: #5A3E28;
+  --st-ink: #3E2B1B;
+  --st-warm-gray: #6F6052;
+
+  font-family: 'Jost', sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -15,7 +27,15 @@ html {
 body {
   margin: 0;
   min-width: 320px;
-  background: #f5f5f2;
+  background: var(--st-cream);
+  color: var(--st-ink);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 * {
@@ -23,8 +43,8 @@ body {
 }
 
 ::selection {
-  background: #111111;
-  color: #ffffff;
+  background: var(--st-caramel);
+  color: var(--st-cream);
 }
 
 @keyframes marquee {

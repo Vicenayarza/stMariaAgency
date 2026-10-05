@@ -97,7 +97,7 @@ function AdminDashboard() {
       <div className="space-y-8">
         <div>
           <p className="text-[9px] uppercase tracking-[0.16em] text-black/35">
-            ST.MARIA Agency
+          ST.MARY AGENCY 
           </p>
 
           <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
@@ -119,7 +119,7 @@ function AdminDashboard() {
       <div className="space-y-8">
         <div>
           <p className="text-[9px] uppercase tracking-[0.16em] text-black/35">
-            ST.MARIA Agency
+            ST.MARY AGENCY 
           </p>
 
           <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em]">
@@ -153,7 +153,7 @@ function AdminDashboard() {
       <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
         <div>
           <p className="text-[9px] uppercase tracking-[0.16em] text-black/35">
-            ST.MARIA Agency
+            ST.MARY AGENCY 
           </p>
 
           <h1 className="mt-2 text-3xl font-semibold tracking-[-0.05em]">
@@ -162,7 +162,7 @@ function AdminDashboard() {
 
           <p className="mt-2 max-w-xl text-sm leading-6 text-black/45">
             Vista general de clientes, creadores, campañas y actividad
-            operativa de ST.MARIA.
+            operativa de ST.MARY AGENCY.
           </p>
         </div>
 
@@ -182,7 +182,7 @@ function AdminDashboard() {
           </p>
 
           <h2 className="mt-1 text-lg font-medium">
-            Actividad de ST.MARIA
+            Actividad de ST.MARY AGENCY.
           </h2>
         </div>
 

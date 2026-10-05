@@ -14,7 +14,15 @@ function CreatorDashboardLayout() {
       path: "/creator",
     },
     {
-      label: "Campañas",
+      label: "Oportunidades",
+      path: "/creator/opportunities",
+    },
+     {
+    label: "Mis candidaturas",
+    path: "/creator/applications",
+  },
+    {
+      label: "Mis Campañas",
       path: "/creator/campaigns",
     },
     {
@@ -66,7 +74,7 @@ function CreatorDashboardLayout() {
               to="/creator"
               className="text-xl font-semibold tracking-[-0.05em]"
             >
-              ST.MARIA
+              ST.MARY AGENCY 
             </Link>
 
             <p className="mt-2 text-[9px] uppercase tracking-[0.16em] text-black/35">
@@ -147,7 +155,7 @@ function CreatorDashboardLayout() {
               to="/"
               className="block rounded-xl px-4 py-3 text-[10px] uppercase tracking-[0.14em] text-black/40 hover:bg-black/5 hover:text-black"
             >
-              ← Volver a ST.MARIA
+              ← Volver a ST.MARY AGENCY 
             </Link>
 
             <button
@@ -176,7 +184,7 @@ function CreatorDashboardLayout() {
           <div>
 
             <p className="text-[9px] uppercase tracking-[0.16em] text-black/35">
-              ST.MARIA
+              ST.MARY AGENCY 
             </p>
 
             <p className="mt-1 text-sm font-medium">

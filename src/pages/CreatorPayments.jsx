@@ -105,7 +105,7 @@ export default function CreatorPayments() {
           </h1>
 
           <p className="mt-2 text-gray-500">
-            Consulta tus ingresos generados a través de ST.MARIA.
+            Consulta tus ingresos generados a través de ST.MARY AGENCY.
           </p>
         </div>
 
@@ -148,7 +148,7 @@ export default function CreatorPayments() {
                   <strong>
                     {formatCurrency(stats.pending)}
                   </strong>{" "}
-                  pendientes de pago por parte de ST.MARIA.
+                  pendientes de pago por parte de ST.MARY AGENCY .
                 </p>
               </div>
             </div>
@@ -164,7 +164,7 @@ export default function CreatorPayments() {
 
             <p className="mt-1 text-sm text-gray-500">
               Todas las colaboraciones que has realizado con
-              ST.MARIA.
+              ST.MARY AGENCY.
             </p>
           </div>
 
@@ -214,7 +214,7 @@ export default function CreatorPayments() {
 
             <Info
               title="Pagado"
-              text="ST.MARIA ha registrado el pago de la colaboración."
+              text="ST.MARY AGENCY ha registrado el pago de la colaboración."
             />
           </div>
         </section>
@@ -248,7 +248,7 @@ function PaymentRow({ payment }) {
   const campaign = payment.campaign || {};
 
   const campaignName =
-    campaign.name || "Colaboración ST.MARIA";
+    campaign.name || "Colaboración ST.MARY AGENCY ";
 
   const platform =
     campaign.platform || "Plataforma no especificada";

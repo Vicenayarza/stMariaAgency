@@ -16,7 +16,7 @@ const PLATFORM_LABELS = {
 const VERIFICATION_LABELS = {
   UNVERIFIED: "No verificado",
   PENDING: "Pendiente de revisión",
-  VERIFIED: "Verificado por ST.MARIA",
+  VERIFIED: "Verificado por ST.MARY AGENCY",
   REJECTED: "Rechazado",
 };
 
@@ -341,7 +341,7 @@ export default function CreatorProfile() {
       );
 
       setMessage(
-        "Solicitud de verificación enviada a ST.MARIA."
+        "Solicitud de verificación enviada a ST.MARY AGENCY."
       );
 
       await loadSocialAccounts();
@@ -496,7 +496,7 @@ export default function CreatorProfile() {
           </p>
 
           <p className="mt-1 text-xs text-slate-500">
-            Verificadas por ST.MARIA
+            Verificadas por ST.MARY AGENCY 
           </p>
         </div>
       </section>
@@ -510,7 +510,7 @@ export default function CreatorProfile() {
 
           <p className="mt-1 text-sm text-slate-500">
             Esta información aparecerá en tu perfil
-            dentro de ST.MARIA.
+            dentro de ST.MARY AGENCY.
           </p>
         </div>
 
@@ -1118,7 +1118,7 @@ export default function CreatorProfile() {
                                   <p className="mt-3 text-sm text-emerald-700">
                                     ✓ Estas métricas han
                                     sido verificadas por
-                                    ST.MARIA.
+                                    ST.MARY AGENCY.
                                   </p>
                                 )}
 
@@ -1158,7 +1158,7 @@ export default function CreatorProfile() {
                                   <div className="mt-5 rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
                                     Tu solicitud está
                                     pendiente de revisión
-                                    por ST.MARIA.
+                                    por ST.MARY AGENCY.
                                   </div>
                                 )}
                               </>
@@ -1173,7 +1173,7 @@ export default function CreatorProfile() {
                             <p className="mt-2 text-sm text-slate-500">
                               {metric?.source ===
                                 "STMARIA" &&
-                                "Métricas verificadas directamente por ST.MARIA."}
+                                "Métricas verificadas directamente por ST.MARY AGENCY."}
 
                               {metric?.source ===
                                 "API" &&

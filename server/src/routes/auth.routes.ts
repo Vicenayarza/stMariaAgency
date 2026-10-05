@@ -1,4 +1,5 @@
 import { Router } from "express";
+
 import {
   login,
   logout,
@@ -24,23 +25,45 @@ const cookieOptions = {
   maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
+/*
+ * ==========================================
+ * REGISTER BRAND
+ * ==========================================
+ *
+ * Registro autogestionado.
+ *
+ * registerBrand() crea:
+ *
+ * User
+ *   -> BrandMember
+ *       -> Brand
+ *
+ * El Brand se crea como SELF_MANAGED.
+ */
 router.post("/register/brand", async (req, res) => {
   try {
-    console.log("BODY RECIBIDO:", req.body);
-
     const {
       name,
       email,
       password,
       companyName,
-    } = req.body;
-
+    } = req.body ?? {};
 
     if (
       typeof name !== "string" ||
       typeof email !== "string" ||
       typeof password !== "string" ||
       typeof companyName !== "string"
+    ) {
+      return res.status(400).json({
+        error: "INVALID_INPUT",
+      });
+    }
+
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !companyName.trim()
     ) {
       return res.status(400).json({
         error: "INVALID_INPUT",
@@ -60,13 +83,64 @@ router.post("/register/brand", async (req, res) => {
       companyName,
     });
 
+    const membership =
+      user.brandMemberships?.[0] ?? null;
+
     return res.status(201).json({
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
-        brand: user.brand,
+
+        brandMemberships:
+          user.brandMemberships,
+
+        brand: membership?.brand ?? null,
+
+        brandMembership:
+          membership
+            ? {
+                id: membership.id,
+                role: membership.role,
+
+                canViewCampaigns:
+                  membership.canViewCampaigns,
+
+                canCreateCampaigns:
+                  membership.canCreateCampaigns,
+
+                canEditCampaigns:
+                  membership.canEditCampaigns,
+
+                canViewProposals:
+                  membership.canViewProposals,
+
+                canApproveCreators:
+                  membership.canApproveCreators,
+
+                canViewDeliverables:
+                  membership.canViewDeliverables,
+
+                canApproveContent:
+                  membership.canApproveContent,
+
+                canViewResults:
+                  membership.canViewResults,
+
+                canExportReports:
+                  membership.canExportReports,
+
+                canDiscoverCreators:
+                  membership.canDiscoverCreators,
+
+                canContactCreators:
+                  membership.canContactCreators,
+
+                canSelectCreators:
+                  membership.canSelectCreators,
+              }
+            : null,
       },
     });
   } catch (error) {
@@ -79,7 +153,24 @@ router.post("/register/brand", async (req, res) => {
       });
     }
 
-    console.error(error);
+    if (
+      error instanceof Error &&
+      [
+        "NAME_REQUIRED",
+        "EMAIL_REQUIRED",
+        "PASSWORD_REQUIRED",
+        "COMPANY_NAME_REQUIRED",
+      ].includes(error.message)
+    ) {
+      return res.status(400).json({
+        error: error.message,
+      });
+    }
+
+    console.error(
+      "Register brand error:",
+      error
+    );
 
     return res.status(500).json({
       error: "REGISTER_ERROR",
@@ -87,81 +178,124 @@ router.post("/register/brand", async (req, res) => {
   }
 });
 
-router.post("/register/creator", async (req, res) => {
-  try {
-    const {
-      name,
-      email,
-      password,
-      username,
-    } = req.body;
+/*
+ * ==========================================
+ * REGISTER CREATOR
+ * ==========================================
+ */
+router.post(
+  "/register/creator",
+  async (req, res) => {
+    try {
+      const {
+        name,
+        email,
+        password,
+        username,
+      } = req.body ?? {};
 
-    if (
-      typeof name !== "string" ||
-      typeof email !== "string" ||
-      typeof password !== "string" ||
-      typeof username !== "string"
-    ) {
-      return res.status(400).json({
-        error: "INVALID_INPUT",
+      if (
+        typeof name !== "string" ||
+        typeof email !== "string" ||
+        typeof password !== "string" ||
+        typeof username !== "string"
+      ) {
+        return res.status(400).json({
+          error: "INVALID_INPUT",
+        });
+      }
+
+      if (
+        !name.trim() ||
+        !email.trim() ||
+        !username.trim()
+      ) {
+        return res.status(400).json({
+          error: "INVALID_INPUT",
+        });
+      }
+
+      if (password.length < 8) {
+        return res.status(400).json({
+          error: "PASSWORD_TOO_SHORT",
+        });
+      }
+
+      const user =
+        await registerCreator({
+          name,
+          email,
+          password,
+          username,
+        });
+
+      return res.status(201).json({
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          creator: user.creator,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message ===
+          "EMAIL_ALREADY_EXISTS"
+      ) {
+        return res.status(409).json({
+          error: "EMAIL_ALREADY_EXISTS",
+        });
+      }
+
+      if (
+        error instanceof Error &&
+        error.message ===
+          "USERNAME_ALREADY_EXISTS"
+      ) {
+        return res.status(409).json({
+          error: "USERNAME_ALREADY_EXISTS",
+        });
+      }
+
+      if (
+        error instanceof Error &&
+        [
+          "NAME_REQUIRED",
+          "EMAIL_REQUIRED",
+          "PASSWORD_REQUIRED",
+          "USERNAME_REQUIRED",
+        ].includes(error.message)
+      ) {
+        return res.status(400).json({
+          error: error.message,
+        });
+      }
+
+      console.error(
+        "Register creator error:",
+        error
+      );
+
+      return res.status(500).json({
+        error: "REGISTER_ERROR",
       });
     }
-
-    if (password.length < 8) {
-      return res.status(400).json({
-        error: "PASSWORD_TOO_SHORT",
-      });
-    }
-
-    const user = await registerCreator({
-      name,
-      email,
-      password,
-      username,
-    });
-
-    return res.status(201).json({
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        creator: user.creator,
-      },
-    });
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      error.message === "EMAIL_ALREADY_EXISTS"
-    ) {
-      return res.status(409).json({
-        error: "EMAIL_ALREADY_EXISTS",
-      });
-    }
-
-    if (
-      error instanceof Error &&
-      error.message === "USERNAME_ALREADY_EXISTS"
-    ) {
-      return res.status(409).json({
-        error: "USERNAME_ALREADY_EXISTS",
-      });
-    }
-
-    console.error(error);
-
-    return res.status(500).json({
-      error: "REGISTER_ERROR",
-    });
   }
-});
+);
 
+/*
+ * ==========================================
+ * LOGIN
+ * ==========================================
+ */
 router.post("/login", async (req, res) => {
   try {
     const {
       email,
       password,
-    } = req.body;
+    } = req.body ?? {};
 
     if (
       typeof email !== "string" ||
@@ -194,14 +328,18 @@ router.post("/login", async (req, res) => {
   } catch (error) {
     if (
       error instanceof Error &&
-      error.message === "INVALID_CREDENTIALS"
+      error.message ===
+        "INVALID_CREDENTIALS"
     ) {
       return res.status(401).json({
         error: "INVALID_CREDENTIALS",
       });
     }
 
-    console.error(error);
+    console.error(
+      "Login error:",
+      error
+    );
 
     return res.status(500).json({
       error: "LOGIN_ERROR",
@@ -209,9 +347,24 @@ router.post("/login", async (req, res) => {
   }
 });
 
+/*
+ * ==========================================
+ * LOGOUT
+ * ==========================================
+ */
 router.post("/logout", async (req, res) => {
   try {
-    const token = req.cookies?.["tmaria-session"];
+    /*
+     * IMPORTANTE:
+     *
+     * Antes ponía:
+     * tmaria-session
+     *
+     * pero la cookie correcta es:
+     * stmaria-session
+     */
+    const token =
+      req.cookies?.["stmaria-session"];
 
     if (token) {
       await logout(token);
@@ -229,7 +382,10 @@ router.post("/logout", async (req, res) => {
 
     return res.status(204).send();
   } catch (error) {
-    console.error(error);
+    console.error(
+      "Logout error:",
+      error
+    );
 
     return res.status(500).json({
       error: "LOGOUT_ERROR",
@@ -237,10 +393,30 @@ router.post("/logout", async (req, res) => {
   }
 });
 
+/*
+ * ==========================================
+ * CURRENT USER
+ * ==========================================
+ *
+ * Este endpoint es especialmente importante
+ * para el frontend.
+ *
+ * Para BRAND devolvemos también:
+ *
+ * - brand
+ * - brandMembership
+ * - brandMemberships
+ *
+ * De esta manera podemos adaptar el frontend
+ * progresivamente sin romperlo de golpe.
+ */
 router.get(
   "/me",
   requireAuth,
-  (req: AuthenticatedRequest, res) => {
+  (
+    req: AuthenticatedRequest,
+    res
+  ) => {
     const user = req.user;
 
     if (!user) {
@@ -249,14 +425,89 @@ router.get(
       });
     }
 
+    /*
+     * BRAND puede pertenecer en el futuro
+     * a más de una empresa.
+     *
+     * Para el MVP utilizamos la primera
+     * membresía como empresa activa.
+     */
+    const membership =
+      user.role === "BRAND"
+        ? user.brandMemberships?.[0] ??
+          null
+        : null;
+
     return res.json({
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
-        brand: user.brand,
-        creator: user.creator,
+
+        /*
+         * Compatibilidad con el frontend actual.
+         *
+         * Aunque Prisma ya no tiene User.brand,
+         * seguimos enviando "brand" en la API.
+         */
+        brand:
+          membership?.brand ?? null,
+
+        brandMembership:
+          membership
+            ? {
+                id: membership.id,
+                role: membership.role,
+
+                canViewCampaigns:
+                  membership.canViewCampaigns,
+
+                canCreateCampaigns:
+                  membership.canCreateCampaigns,
+
+                canEditCampaigns:
+                  membership.canEditCampaigns,
+
+                canViewProposals:
+                  membership.canViewProposals,
+
+                canApproveCreators:
+                  membership.canApproveCreators,
+
+                canViewDeliverables:
+                  membership.canViewDeliverables,
+
+                canApproveContent:
+                  membership.canApproveContent,
+
+                canViewResults:
+                  membership.canViewResults,
+
+                canExportReports:
+                  membership.canExportReports,
+
+                canDiscoverCreators:
+                  membership.canDiscoverCreators,
+
+                canContactCreators:
+                  membership.canContactCreators,
+
+                canSelectCreators:
+                  membership.canSelectCreators,
+              }
+            : null,
+
+        brandMemberships:
+          user.role === "BRAND"
+            ? user.brandMemberships
+            : [],
+
+        creator:
+          user.creator ?? null,
+
+        staff:
+          user.staff ?? null,
       },
     });
   }

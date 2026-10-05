@@ -306,7 +306,7 @@ function Campaigns() {
         <div className="max-w-2xl">
 
           <p className="text-[9px] uppercase tracking-[0.16em] text-white/35">
-            ST.MARIA
+            ST.MARY AGENCY 
           </p>
 
           <h2 className="mt-3 text-2xl font-medium tracking-[-0.04em]">

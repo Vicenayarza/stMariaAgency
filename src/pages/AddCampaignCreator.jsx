@@ -379,7 +379,7 @@ function CreatorRow({
             </p>
 
             <p className="mt-1 text-xs text-black/40">
-              {creator.name || "Creador ST.MARIA"}
+              {creator.name || "Creador ST.MARY AGENCY"}
             </p>
           </div>
         </div>

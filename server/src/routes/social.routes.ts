@@ -531,7 +531,7 @@ router.post(
  * GET /api/social/metrics/pending
  *
  * Devuelve las métricas que están pendientes
- * de verificación por parte de ST.MARIA.
+ * de verificación por parte de ST.MARY AGENCY 
  *
  * Solo STAFF.
  */
@@ -596,7 +596,7 @@ router.get(
 /**
  * PATCH /api/social/metrics/:id/verify
  *
- * ST.MARIA verifica una métrica.
+ * ST.MARY AGENCY verifica una métrica.
  */
 router.patch(
   "/metrics/:id/verify",
@@ -683,7 +683,7 @@ router.patch(
 /**
  * PATCH /api/social/metrics/:id/reject
  *
- * ST.MARIA rechaza una métrica.
+ * ST.MARY AGENCY  rechaza una métrica.
  */
 router.patch(
   "/metrics/:id/reject",
@@ -768,7 +768,7 @@ router.patch(
 /**
  * PATCH /api/social/metrics/:id/request-verification
  *
- * El creador solicita que ST.MARIA verifique sus métricas.
+ * El creador solicita que ST.MARY AGENCY verifique sus métricas.
  */
 router.patch(
   "/metrics/:id/request-verification",

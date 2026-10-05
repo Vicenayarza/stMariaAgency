@@ -1,8 +1,8 @@
-# ST.MARIA Agency
+# ST.MARY Agency
 
 > Influencer Marketing Platform & Campaign Management System
 
-ST.MARIA is a technology platform designed to support influencer marketing campaigns from campaign creation and creator discovery to collaboration management, performance analysis and internal agency operations.
+ST.MARY AGENCY is a technology platform designed to support influencer marketing campaigns from campaign creation and creator discovery to collaboration management, performance analysis and internal agency operations.
 
 The project combines a SaaS platform with agency-oriented workflows, allowing brands and internal teams to manage influencer campaigns through a centralized system.
 
@@ -12,13 +12,13 @@ The project combines a SaaS platform with agency-oriented workflows, allowing br
 
 ## Overview
 
-ST.MARIA is being developed as a full-stack platform for influencer marketing agencies and brands.
+ST.MARY AGENCY is being developed as a full-stack platform for influencer marketing agencies and brands.
 
 The system is designed around three main actors:
 
 - **Brands** — create and manage campaigns.
 - **Creators** — manage their profiles, social accounts and collaborations.
-- **ST.MARIA Staff** — manage campaigns, creators, metrics and internal operations.
+- **ST.MARY AGENCY Staff** — manage campaigns, creators, metrics and internal operations.
 
 The platform is designed to support the complete campaign lifecycle while keeping agency operations and financial management separated from creator collaboration workflows.
 
@@ -96,7 +96,13 @@ These signals are intended as decision-support indicators and are not presented 
 
 ### Matching Engine
 
-ST.MARIA includes a creator recommendation engine that ranks creators according to their compatibility with a campaign.
+ST.MARY AGENCY
+
+
+
+
+
+ includes a creator recommendation engine that ranks creators according to their compatibility with a campaign.
 
 The matching system considers factors such as:
 
@@ -113,7 +119,7 @@ The result is a ranked list of recommended creators for each campaign.
 
 ## Architecture
 
-ST.MARIA
+ST.MARY AGENCY
 │
 ├── Frontend
 │   ├── React
@@ -217,7 +223,7 @@ No credentials, API keys or production secrets are included in the repository.
 
 ## Development Status
 
-ST.MARIA is an active development project.
+ST.MARY AGENCY is an active development project.
 
  ### Implemented
     Authentication
@@ -259,7 +265,7 @@ Future development includes:
 
 ## Project Goals
 
-The main objective of ST.MARIA is to combine software engineering, data analysis and influencer marketing into a scalable platform.
+The main objective of ST.MARY AGECY is to combine software engineering, data analysis and influencer marketing into a scalable platform.
 
 The project focuses on:
 
@@ -272,7 +278,7 @@ Scalable backend architecture
 
 ## Disclaimer
 
-ST.MARIA is an independent project currently under active development.
+ST.MARY AGENCY is an independent project currently under active development.
 
 Some features, integrations and production infrastructure are not yet implemented.
 

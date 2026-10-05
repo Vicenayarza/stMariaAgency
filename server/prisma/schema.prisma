@@ -26,6 +26,19 @@ enum UserStatus {
   SUSPENDED
 }
 
+enum BrandAccessMode {
+  MANAGED
+  PORTAL
+  SELF_MANAGED
+}
+
+enum BrandMemberRole {
+  OWNER
+  ADMIN
+  MARKETING
+  VIEWER
+}
+
 enum SocialPlatform {
   INSTAGRAM
   TIKTOK
@@ -50,6 +63,79 @@ enum MetricVerificationStatus {
   REJECTED
 }
 
+enum DeliverableStatus {
+  PENDING
+  SUBMITTED
+  IN_REVIEW
+  APPROVED
+  REJECTED
+}
+
+enum CampaignType {
+  INFLUENCER_MARKETING
+  UGC
+  INFLUENCER_AND_UGC
+  AMPLIFICATION
+}
+
+enum CampaignApplicationStatus {
+  APPLIED
+  SHORTLISTED
+  NOT_SELECTED
+  SELECTED
+  WITHDRAWN
+}
+
+enum CreatorProviderType {
+  EXTERNAL_DATABASE
+  API
+  MANUAL
+  INTERNAL
+}
+
+enum CreatorMatchStatus {
+  RECOMMENDED
+  SHORTLISTED
+  REJECTED
+  SELECTED
+}
+
+enum CreatorListType {
+  GENERAL
+  CAMPAIGN
+  FAVORITES
+  CUSTOM
+}
+
+enum ExternalMetricSource {
+  PROVIDER
+  API
+  MANUAL
+}
+
+enum AudienceMetricType {
+  AGE
+  GENDER
+  COUNTRY
+  REGION
+  CITY
+  INTEREST
+  LANGUAGE
+}
+
+enum CampaignProposalStatus {
+  PROPOSED
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum CollaborationType {
+  PAID
+  PRODUCT
+  PAID_AND_PRODUCT
+}
+
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
@@ -58,9 +144,9 @@ model User {
   role         UserRole
   status       UserStatus @default(ACTIVE)
 
-  brand   Brand?
-  creator Creator?
-  staff   StaffMember?
+  brandMemberships BrandMember[]
+  creator          Creator?
+  staff            StaffMember?
 
   sessions Session[]
 
@@ -70,6 +156,8 @@ model User {
 
   verifiedCreatorMetrics CreatorMetric[]
 
+  creatorLists CreatorList[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -78,18 +166,59 @@ model User {
 }
 
 model Brand {
-  id          String  @id @default(uuid())
-  userId      String  @unique
-  companyName String
-  website     String?
-  industry    String?
+  id           String  @id @default(uuid())
+  companyName  String
+  website      String?
+  industry     String?
+  contactName  String?
+  contactEmail String?
+  contactPhone String?
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessMode BrandAccessMode @default(MANAGED)
 
   campaigns Campaign[]
+  members   BrandMember[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([accessMode])
+}
+
+model BrandMember {
+  id String @id @default(uuid())
+
+  brandId String
+  userId  String
+
+  role BrandMemberRole @default(VIEWER)
+
+  canViewCampaigns   Boolean @default(true)
+  canCreateCampaigns Boolean @default(false)
+  canEditCampaigns   Boolean @default(false)
+
+  canViewProposals   Boolean @default(true)
+  canApproveCreators Boolean @default(false)
+
+  canViewDeliverables Boolean @default(true)
+  canApproveContent   Boolean @default(false)
+
+  canViewResults   Boolean @default(true)
+  canExportReports Boolean @default(false)
+
+  canDiscoverCreators Boolean @default(false)
+  canContactCreators  Boolean @default(false)
+  canSelectCreators   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([brandId, userId])
+  @@index([brandId])
+  @@index([userId])
 }
 
 model Creator {
@@ -109,6 +238,18 @@ model Creator {
   campaignLinks CampaignCreator[]
 
   socialAccounts CreatorSocialAccount[]
+
+  matches CreatorMatch[]
+
+  listMembers CreatorListMember[]
+
+  externalSources ExternalCreator[]
+
+  campaignApplications CampaignApplication[]
+
+  proposals CampaignProposal[]
+
+  opportunityDismissals CampaignOpportunityDismissal[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -131,18 +272,94 @@ model Campaign {
   category  String?
   platform  String?
 
+  collaborationType CollaborationType @default(PAID)
+
+  creatorFee Decimal? @db.Decimal(12, 2)
+
+  campaignType CampaignType @default(INFLUENCER_MARKETING)
+
+  /**
+   * Campaign segmentation.
+   * These fields prepare the campaign builder and the
+   * Matching Engine for creator discovery.
+   */
+  platforms          String[]
+  formats            String[]
+  countries          String[]
+  provinces          String[]
+  gender             String?
+  minAge             Int?
+  maxAge             Int?
+  interests          String[]
+  targetCreatorCount Int?
+
   startDate DateTime?
   endDate   DateTime?
+
+  /**
+   * Publication window.
+   * Kept separate from the general campaign dates.
+   */
+  publicationStart    DateTime?
+  publicationDeadline DateTime?
 
   brand Brand @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
   creators CampaignCreator[]
+
+  instructions CampaignInstruction[]
+
+  matches CreatorMatch[]
+  
+
+  creatorLists CreatorList[]
+
+  proposals CampaignProposal[]
+
+  applications CampaignApplication[]
+
+  opportunityDismissals CampaignOpportunityDismissal[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([brandId])
   @@index([status])
+  @@index([campaignType])
+}
+
+model CampaignInstruction {
+  id String @id @default(uuid())
+
+  campaignId String
+
+  title       String
+  description String?
+
+  platform    String?
+  contentType String?
+  quantity    Int     @default(1)
+
+  publicationDate DateTime?
+  deadline        DateTime?
+
+  hashtags String[]
+  mentions String[]
+  tags     String[]
+  links    String[]
+
+  forbiddenContent String?
+
+  approvalRequired Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([platform])
+  @@index([deadline])
 }
 
 model CampaignCreator {
@@ -172,6 +389,424 @@ model CampaignCreator {
   @@index([campaignId])
   @@index([creatorId])
   @@index([status])
+}
+
+model CampaignOpportunityDismissal {
+  id String @id @default(uuid())
+
+  campaignId String
+  creatorId  String
+
+  dismissedAt DateTime @default(now())
+
+  campaign Campaign @relation(fields: [campaignId],references: [id],onDelete: Cascade)
+
+  creator Creator @relation(fields: [creatorId],references: [id],onDelete: Cascade)
+
+  @@unique([campaignId, creatorId])
+  @@index([campaignId])
+  @@index([creatorId])
+  @@index([dismissedAt])
+}
+
+model CampaignApplication {
+  id String @id @default(uuid())
+
+  campaignId String
+  creatorId  String
+
+  status CampaignApplicationStatus @default(APPLIED)
+
+  // Momento en que el creador pulsa "Me interesa"
+  appliedAt DateTime @default(now())
+
+  // Momento en que STAFF revisa/modifica la candidatura
+  reviewedAt DateTime?
+
+  // Notas internas de ST.MARY AGENCY
+  internalNotes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  // Un creador solo puede presentar una candidatura
+  // por campaña.
+  @@unique([campaignId, creatorId])
+  @@index([campaignId])
+  @@index([creatorId])
+  @@index([status])
+  @@index([appliedAt])
+}
+
+model CreatorProvider {
+  id String @id @default(uuid())
+
+  name String @unique
+
+  type CreatorProviderType
+
+  active Boolean @default(true)
+
+  /**
+   * Optional metadata/configuration.
+   * API credentials must NEVER be stored here in plaintext.
+   * Real secrets will live in environment variables or a
+   * dedicated secret manager.
+   */
+  metadata Json?
+
+  externalCreators ExternalCreator[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([type])
+  @@index([active])
+}
+
+model ExternalCreator {
+  id String @id @default(uuid())
+
+  providerId String
+
+  linkedCreatorId String?
+
+  externalId String
+
+  username    String?
+  displayName String?
+
+  bio      String?
+  location String?
+
+  country  String?
+  province String?
+  city     String?
+
+  categories String[]
+  interests  String[]
+
+  /**
+   * General creator-level values.
+   * Platform-specific metrics live in ExternalCreatorMetric.
+   */
+  followers      Int   @default(0)
+  engagementRate Float @default(0)
+
+  profileUrl String?
+
+  /**
+   * Indicates whether ST.MARY AGENCY has established a relationship
+   * with this external creator.
+   */
+  isContacted Boolean @default(false)
+  isInvited   Boolean @default(false)
+
+  lastSyncedAt DateTime?
+
+  provider CreatorProvider @relation(fields: [providerId], references: [id], onDelete: Cascade)
+
+  linkedCreator Creator? @relation(fields: [linkedCreatorId], references: [id], onDelete: SetNull)
+
+  profiles ExternalCreatorProfile[]
+
+  metrics ExternalCreatorMetric[]
+
+  audienceMetrics ExternalCreatorAudience[]
+
+  matches CreatorMatch[]
+
+  proposals CampaignProposal[]
+
+  listMembers CreatorListMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([providerId, externalId])
+  @@index([providerId])
+  @@index([username])
+  @@index([country])
+  @@index([province])
+  @@index([city])
+  @@index([followers])
+  @@index([engagementRate])
+  @@index([linkedCreatorId])
+}
+
+model ExternalCreatorProfile {
+  id String @id @default(uuid())
+
+  externalCreatorId String
+
+  platform SocialPlatform
+
+  username String
+
+  displayName String?
+
+  profileUrl String?
+
+  followers Int @default(0)
+
+  following Int?
+  posts     Int?
+
+  engagementRate Float @default(0)
+
+  verified Boolean @default(false)
+
+  lastSyncedAt DateTime?
+
+  externalCreator ExternalCreator @relation(fields: [externalCreatorId], references: [id], onDelete: Cascade)
+
+  metrics ExternalCreatorMetric[]
+
+  @@unique([externalCreatorId, platform])
+  @@index([platform])
+  @@index([username])
+  @@index([followers])
+}
+
+model ExternalCreatorMetric {
+  id String @id @default(uuid())
+
+  externalCreatorId String
+
+  profileId String?
+
+  followers Int @default(0)
+
+  following Int?
+  posts     Int?
+
+  likes    Int @default(0)
+  comments Int @default(0)
+  views    Int @default(0)
+
+  reach       Int?
+  impressions Int?
+
+  engagementRate Float @default(0)
+
+  source ExternalMetricSource @default(PROVIDER)
+
+  recordedAt DateTime @default(now())
+
+  externalCreator ExternalCreator @relation(fields: [externalCreatorId], references: [id], onDelete: Cascade)
+
+  profile ExternalCreatorProfile? @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([externalCreatorId])
+  @@index([profileId])
+  @@index([recordedAt])
+  @@index([source])
+}
+
+model ExternalCreatorAudience {
+  id String @id @default(uuid())
+
+  externalCreatorId String
+
+  platform SocialPlatform?
+
+  metricType AudienceMetricType
+
+  /**
+   * Examples:
+   * metricType = AGE
+   * dimension = "18-24"
+   * value = 31.5
+   * metricType = COUNTRY
+   * dimension = "Spain"
+   * value = 74.2
+   */
+  dimension String
+
+  value Float
+
+  recordedAt DateTime @default(now())
+
+  externalCreator ExternalCreator @relation(fields: [externalCreatorId], references: [id], onDelete: Cascade)
+
+  @@index([externalCreatorId])
+  @@index([metricType])
+  @@index([dimension])
+  @@index([recordedAt])
+}
+
+model CreatorMatch {
+  id String @id @default(uuid())
+
+  campaignId String
+
+  /**
+   * Exactly one of these should normally be populated:
+   * creatorId       -> creator registered in ST.MARY AGENCY
+   * externalCreatorId -> creator discovered externally
+   * We keep both nullable because the Matching Engine must
+   * support both populations.
+   */
+  creatorId         String?
+  externalCreatorId String?
+
+  status CreatorMatchStatus @default(RECOMMENDED)
+
+  /**
+   * Final normalized score.
+   */
+  score Float @default(0)
+
+  /**
+   * Matching dimensions.
+   */
+  campaignFit     Float @default(0)
+  audienceFit     Float @default(0)
+  categoryFit     Float @default(0)
+  platformFit     Float @default(0)
+  formatFit       Float @default(0)
+  locationFit     Float @default(0)
+  demographicFit  Float @default(0)
+  interestFit     Float @default(0)
+  engagementScore Float @default(0)
+  audienceQuality Float @default(0)
+  trustScore      Float @default(0)
+  riskScore       Float @default(0)
+
+  /**
+   * Explanation generated by the Matching Engine.
+   * Example:
+   * {
+   * "positive": [
+   * "Coincide categoría",
+   * "Coincide plataforma"
+   * ],
+   * "negative": [
+   * "Audiencia geográfica parcial"
+   * ]
+   * }
+   */
+  explanation Json?
+
+  calculatedAt DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  creator Creator? @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  externalCreator ExternalCreator? @relation(fields: [externalCreatorId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, creatorId])
+  @@unique([campaignId, externalCreatorId])
+  @@index([campaignId])
+  @@index([creatorId])
+  @@index([externalCreatorId])
+  @@index([status])
+  @@index([score])
+  @@index([calculatedAt])
+}
+
+model CampaignProposal {
+  id String @id @default(uuid())
+
+  campaignId String
+
+  creatorId         String?
+  externalCreatorId String?
+
+  status CampaignProposalStatus @default(PROPOSED)
+
+  proposedAt DateTime  @default(now())
+  decidedAt  DateTime?
+
+  clientNotes   String?
+  internalNotes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  creator Creator? @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  externalCreator ExternalCreator? @relation(fields: [externalCreatorId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, creatorId])
+  @@unique([campaignId, externalCreatorId])
+  @@index([campaignId])
+  @@index([creatorId])
+  @@index([externalCreatorId])
+  @@index([status])
+  @@index([proposedAt])
+}
+
+model CreatorList {
+  id String @id @default(uuid())
+
+  name String
+
+  description String?
+
+  type CreatorListType @default(GENERAL)
+
+  /**
+   * Optional ownership.
+   * STAFF lists may have no userId.
+   */
+  userId String?
+
+  /**
+   * Optional campaign-specific list.
+   */
+  campaignId String?
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  members CreatorListMember[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([campaignId])
+  @@index([type])
+}
+
+model CreatorListMember {
+  id String @id @default(uuid())
+
+  listId String
+
+  /**
+   * A list can contain both ST.MARY AGENCY creators
+   * and external creators.
+   */
+  creatorId         String?
+  externalCreatorId String?
+
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  list CreatorList @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  creator Creator? @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+  externalCreator ExternalCreator? @relation(fields: [externalCreatorId], references: [id], onDelete: Cascade)
+
+  @@unique([listId, creatorId])
+  @@unique([listId, externalCreatorId])
+  @@index([listId])
+  @@index([creatorId])
+  @@index([externalCreatorId])
 }
 
 model Session {
@@ -212,14 +847,6 @@ model AuditLog {
   @@index([userId])
   @@index([entity, entityId])
   @@index([createdAt])
-}
-
-enum DeliverableStatus {
-  PENDING
-  SUBMITTED
-  IN_REVIEW
-  APPROVED
-  REJECTED
 }
 
 model Deliverable {

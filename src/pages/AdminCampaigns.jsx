@@ -103,7 +103,7 @@ function AdminCampaigns() {
 
           <p className="mt-3 max-w-xl text-sm leading-6 text-black/45">
             Vista global de todas las campañas gestionadas por
-            ST.MARIA.
+            ST.MARY AGENCY.
           </p>
         </div>
 

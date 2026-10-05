@@ -117,7 +117,7 @@ function MetricVerification() {
           <p className="mt-3 max-w-2xl text-sm leading-6 text-black/45">
             Revisa las métricas declaradas por los creadores antes
             de utilizarlas como datos verificados dentro de
-            ST.MARIA.
+            ST.MARY AGENCY.
           </p>
         </div>
 

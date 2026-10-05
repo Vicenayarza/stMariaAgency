@@ -2,9 +2,24 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../lib/api";
 
+function getAccessLabel(accessMode) {
+  switch (accessMode) {
+    case "SELF_MANAGED":
+      return "Autogestionado";
+
+    case "PORTAL":
+      return "Portal";
+
+    case "MANAGED":
+    default:
+      return "Gestionado";
+  }
+}
+
 function AdminBrands() {
   const [brands, setBrands] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -16,11 +31,14 @@ function AdminBrands() {
       setLoading(true);
       setError("");
 
-      const data = await api.get("/api/admin/brands");
+      const data = await api.get(
+        "/api/admin/brands"
+      );
 
       setBrands(data.brands || []);
     } catch (err) {
       console.error(err);
+
       setError(
         err?.data?.message ||
           err?.message ||
@@ -44,19 +62,29 @@ function AdminBrands() {
           </h1>
 
           <p className="mt-3 max-w-xl text-sm leading-6 text-black/45">
-            Gestiona las marcas y empresas que trabajan con ST.MARIA.
+            Gestiona las marcas y empresas que
+            trabajan con ST.MARY AGENCY .
           </p>
         </div>
 
-        <div className="rounded-2xl border border-black/10 bg-white px-5 py-4">
-          <p className="text-[9px] uppercase tracking-[0.16em] text-black/35">
-            Total clientes
-          </p>
+        <div className="flex items-center gap-3">
+  <Link
+    to="/admin/brands/new"
+    className="rounded-full bg-black px-5 py-3 text-[10px] font-medium uppercase tracking-[0.12em] text-white transition hover:bg-black/80"
+  >
+    + Nuevo cliente
+  </Link>
 
-          <p className="mt-1 text-2xl font-medium">
-            {loading ? "—" : brands.length}
-          </p>
-        </div>
+  <div className="rounded-2xl border border-black/10 bg-white px-5 py-4">
+    <p className="text-[9px] uppercase tracking-[0.16em] text-black/35">
+      Total clientes
+    </p>
+
+    <p className="mt-1 text-2xl font-medium">
+      {loading ? "—" : brands.length}
+    </p>
+  </div>
+</div>
       </div>
 
       {error && (
@@ -68,7 +96,7 @@ function AdminBrands() {
       <div className="overflow-hidden rounded-2xl border border-black/10 bg-white">
         <div className="border-b border-black/10 px-6 py-5">
           <p className="text-[10px] uppercase tracking-[0.16em] text-black/35">
-            Empresas registradas
+            Empresas
           </p>
         </div>
 
@@ -85,12 +113,13 @@ function AdminBrands() {
             </p>
 
             <p className="mt-2 text-sm text-black/40">
-              Cuando una marca se registre aparecerá aquí.
+              Los clientes gestionados y
+              registrados aparecerán aquí.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[760px]">
+            <table className="w-full min-w-[900px]">
               <thead>
                 <tr className="border-b border-black/10 text-left">
                   <th className="px-6 py-4 text-[9px] font-medium uppercase tracking-[0.14em] text-black/35">
@@ -110,7 +139,11 @@ function AdminBrands() {
                   </th>
 
                   <th className="px-6 py-4 text-[9px] font-medium uppercase tracking-[0.14em] text-black/35">
-                    Estado
+                    Gestión
+                  </th>
+
+                  <th className="px-6 py-4 text-[9px] font-medium uppercase tracking-[0.14em] text-black/35">
+                    Acceso
                   </th>
 
                   <th className="px-6 py-4 text-right text-[9px] font-medium uppercase tracking-[0.14em] text-black/35">
@@ -120,13 +153,25 @@ function AdminBrands() {
               </thead>
 
               <tbody>
-                {brands.map((brand) => (
-                  <tr
-                    key={brand.id}
-                    className="border-b border-black/5 last:border-b-0"
-                  >
-                    <td className="px-6 py-5">
-                      <div>
+                {brands.map((brand) => {
+                  const primaryMember =
+                    brand.members?.[0] ??
+                    null;
+
+                  const contact =
+                    primaryMember?.user ??
+                    null;
+
+                  const hasAccess =
+                    (brand.members?.length ??
+                      0) > 0;
+
+                  return (
+                    <tr
+                      key={brand.id}
+                      className="border-b border-black/5 last:border-b-0"
+                    >
+                      <td className="px-6 py-5">
                         <p className="text-sm font-medium">
                           {brand.companyName}
                         </p>
@@ -136,53 +181,81 @@ function AdminBrands() {
                             {brand.website}
                           </p>
                         )}
-                      </div>
-                    </td>
+                      </td>
 
-                    <td className="px-6 py-5">
-                      <p className="text-sm">
-                        {brand.user?.name || "—"}
-                      </p>
+                      <td className="px-6 py-5">
+                        {contact ? (
+                          <>
+                            <p className="text-sm">
+                              {contact.name}
+                            </p>
 
-                      <p className="mt-1 text-xs text-black/35">
-                        {brand.user?.email || "—"}
-                      </p>
-                    </td>
+                            <p className="mt-1 text-xs text-black/35">
+                              {contact.email}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="text-sm text-black/50">
+                              Gestionado por
+                              ST.MARY AGENCY 
+                            </p>
 
-                    <td className="px-6 py-5">
-                      <span className="text-sm text-black/60">
-                        {brand.industry || "—"}
-                      </span>
-                    </td>
+                            <p className="mt-1 text-xs text-black/30">
+                              Sin usuario
+                              asociado
+                            </p>
+                          </>
+                        )}
+                      </td>
 
-                    <td className="px-6 py-5">
-                      <span className="text-sm font-medium">
-                        {brand._count?.campaigns ?? 0}
-                      </span>
-                    </td>
+                      <td className="px-6 py-5">
+                        <span className="text-sm text-black/60">
+                          {brand.industry ||
+                            "—"}
+                        </span>
+                      </td>
 
-                    <td className="px-6 py-5">
-                      <span
-                        className={`inline-flex rounded-full px-3 py-1 text-[9px] uppercase tracking-[0.12em] ${
-                          brand.user?.status === "ACTIVE"
-                            ? "bg-black text-white"
-                            : "bg-black/5 text-black/45"
-                        }`}
-                      >
-                        {brand.user?.status || "—"}
-                      </span>
-                    </td>
+                      <td className="px-6 py-5">
+                        <span className="text-sm font-medium">
+                          {brand._count
+                            ?.campaigns ?? 0}
+                        </span>
+                      </td>
 
-                    <td className="px-6 py-5 text-right">
-                      <Link
-                        to={`/admin/brands/${brand.id}`}
-                        className="inline-flex rounded-xl border border-black/10 px-4 py-2 text-[10px] uppercase tracking-[0.12em] transition-colors hover:bg-black hover:text-white"
-                      >
-                        Ver cliente
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                      <td className="px-6 py-5">
+                        <span className="rounded-full bg-black/5 px-3 py-1 text-[9px] uppercase tracking-[0.1em] text-black/50">
+                          {getAccessLabel(
+                            brand.accessMode
+                          )}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-5">
+                        <span
+                          className={`inline-flex rounded-full px-3 py-1 text-[9px] uppercase tracking-[0.12em] ${
+                            hasAccess
+                              ? "bg-black text-white"
+                              : "bg-black/5 text-black/45"
+                          }`}
+                        >
+                          {hasAccess
+                            ? "Con acceso"
+                            : "Sin acceso"}
+                        </span>
+                      </td>
+
+                      <td className="px-6 py-5 text-right">
+                        <Link
+                          to={`/admin/brands/${brand.id}`}
+                          className="inline-flex rounded-xl border border-black/10 px-4 py-2 text-[10px] uppercase tracking-[0.12em] transition-colors hover:bg-black hover:text-white"
+                        >
+                          Ver cliente
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
