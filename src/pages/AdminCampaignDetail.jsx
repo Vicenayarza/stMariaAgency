@@ -91,6 +91,8 @@ function getCampaignStatusLabel(status) {
     COMPLETED: "Completada",
 
     CANCELLED: "Cancelada",
+    ARCHIVED: "Archivada",
+    DELETED: "Eliminada",
 
   };
 
@@ -205,6 +207,8 @@ const [
   const [applications, setApplications] = useState([]);
   const [applicationsLoading, setApplicationsLoading] = useState(false);
   const [applicationActionId, setApplicationActionId] = useState(null);
+  const [applicationMessage, setApplicationMessage] = useState("");
+  
 
   const [matchesError, setMatchesError] = useState("");
 
@@ -229,6 +233,14 @@ const [
   const [loading, setLoading] = useState(true);
 
   const [error, setError] = useState("");
+  const [verifyingDeliverableId, setVerifyingDeliverableId] =
+  useState(null);
+const [archivingCampaign, setArchivingCampaign] = useState(false);
+const [changingCampaignStatus, setChangingCampaignStatus] = useState(false);
+const [deletingCampaign, setDeletingCampaign] = useState(false);
+const [campaignActionError, setCampaignActionError] = useState("");
+const [publicationError, setPublicationError] =
+  useState("");
 
   const [updatingCollaborationId, setUpdatingCollaborationId] =
 
@@ -244,45 +256,36 @@ const [
 
 
 
-  async function loadCampaign() {
-
-    try {
-
+  
+async function loadCampaign(silent = false) {
+  try {
+    if (!silent) {
       setLoading(true);
-
-      setError("");
-
-
-
-      const data = await api.get(`/api/admin/campaigns/${id}`);
-
-
-
-      setCampaign(data.campaign);
-
-    } catch (err) {
-
-      console.error(err);
-
-
-
-      setError(
-
-        err?.data?.message ||
-
-          err?.message ||
-
-          "No se ha podido cargar la campaña."
-
-      );
-
-    } finally {
-
-      setLoading(false);
-
     }
 
+    setError("");
+
+    const data = await api.get(
+      `/api/admin/campaigns/${id}`
+    );
+
+    setCampaign(data.campaign);
+  } catch (err) {
+    console.error("Error cargando campaña:", err);
+
+    setError(
+      err?.data?.message ||
+        err?.data?.error ||
+        err?.message ||
+        "No se ha podido cargar la campaña."
+    );
+  } finally {
+    if (!silent) {
+      setLoading(false);
+    }
   }
+}
+
 
 
 
@@ -418,11 +421,24 @@ async function advanceApplication(applicationId) {
   try {
     setApplicationActionId(applicationId);
     setError("");
+    setApplicationMessage("");
 
-    await api.post(
+    const data = await api.post(
       `/api/campaigns/${id}/applications/${applicationId}/advance`,
       {}
     );
+
+    if (data.mode === "CLIENT_APPROVAL") {
+      setApplicationMessage(
+        "La candidatura se ha enviado al cliente y está pendiente de su aprobación."
+      );
+    }
+
+    if (data.mode === "STAFF_SELECTION") {
+      setApplicationMessage(
+        "El creador ha sido seleccionado para la campaña."
+      );
+    }
 
     await Promise.all([
       loadApplications(),
@@ -430,7 +446,10 @@ async function advanceApplication(applicationId) {
       loadMatches(),
     ]);
   } catch (err) {
-    console.error("Error advancing application:", err);
+    console.error(
+      "Error advancing application:",
+      err
+    );
 
     setError(
       err?.data?.message ||
@@ -1030,72 +1049,201 @@ async function confirmCreatorSelection() {
 
 }
 
+
 async function updateCollaborationStatus(
-
   collaborationId,
-
-  status
-
+  status,
+  options = {}
 ) {
+  const {
+    administrativeCorrection = false,
+    correctionReason = "",
+  } = options;
 
   try {
-
-    setUpdatingCollaborationId(
-
-      collaborationId
-
-    );
-
-
-
+    setUpdatingCollaborationId(collaborationId);
     setError("");
 
-
-
     await api.patch(
-
-      `/api/campaigns/${id}/creators/${collaborationId}`,
-
+      `/api/admin/campaigns/${id}/creators/${collaborationId}/status`,
       {
-
         status,
-
+        ...(administrativeCorrection
+          ? {
+              administrativeCorrection: true,
+              correctionReason,
+            }
+          : {}),
       }
-
     );
 
-
-
-    await loadCampaign();
-
+   await loadCampaign(true);
   } catch (err) {
-
-    console.error(err);
-
-
+    console.error(
+      "Error actualizando colaboración:",
+      err
+    );
 
     setError(
-
       err?.data?.message ||
-
         err?.data?.error ||
-
         err?.message ||
-
         "No se ha podido actualizar la colaboración."
-
     );
-
   } finally {
-
     setUpdatingCollaborationId(null);
-
   }
-
 }
 
 
 
+async function verifyPublication(deliverableId) {
+  try {
+    setVerifyingDeliverableId(deliverableId);
+    setPublicationError("");
+
+    await api.patch(
+      `/api/deliverables/${deliverableId}/verify-publication`,
+      {}
+    );
+
+   await loadCampaign(true);
+  } catch (err) {
+    console.error("Error verificando publicación:", err);
+
+    setPublicationError(
+      err?.data?.message ||
+        err?.message ||
+        "No se ha podido verificar la publicación."
+    );
+  } finally {
+    setVerifyingDeliverableId(null);
+  }
+}
+
+
+const campaignActionBusy =
+  archivingCampaign || deletingCampaign || changingCampaignStatus;
+
+async function changeCampaignStatus(nextStatus) {
+  if (!campaign || campaignActionBusy) return;
+
+  const actionLabels = {
+    ACTIVE: "activar",
+    COMPLETED: "finalizar",
+    CANCELLED: "cancelar",
+  };
+  const action = actionLabels[nextStatus];
+  if (!action) return;
+
+  const confirmed = window.confirm(
+    `¿Quieres ${action} la campaña "${campaign.name}"?` +
+      (nextStatus === "CANCELLED"
+        ? "\n\nSe conservarán las colaboraciones, entregables y obligaciones económicas."
+        : "")
+  );
+  if (!confirmed) return;
+
+  try {
+    setChangingCampaignStatus(true);
+    setCampaignActionError("");
+    await api.patch(`/api/admin/campaigns/${id}/status`, {
+      status: nextStatus,
+    });
+    await loadCampaign(true);
+  } catch (err) {
+    setCampaignActionError(
+      err?.response?.data?.message ||
+        err?.data?.message ||
+        err?.data?.error ||
+        err?.message ||
+        "No se ha podido cambiar el estado de la campaña."
+    );
+  } finally {
+    setChangingCampaignStatus(false);
+  }
+}
+
+async function archiveCampaign() {
+  if (!campaign || campaignActionBusy) return;
+
+  const confirmed = window.confirm(
+    `¿Quieres archivar "${campaign.name}"?\n\n` +
+      "La campaña se retirará de las campañas operativas y conservará su historial."
+  );
+  if (!confirmed) return;
+
+  try {
+    setArchivingCampaign(true);
+    setCampaignActionError("");
+    await api.patch(`/api/admin/campaigns/${id}/archive`, {});
+    await loadCampaign(true);
+  } catch (err) {
+    setCampaignActionError(
+      err?.response?.data?.message ||
+        err?.data?.message ||
+        err?.data?.error ||
+        err?.message ||
+        "No se ha podido archivar la campaña."
+    );
+  } finally {
+    setArchivingCampaign(false);
+  }
+}
+
+async function deleteCampaign() {
+  if (!campaign || campaignActionBusy || campaign.status === "DELETED") return;
+
+  const reason = window.prompt(
+    `Motivo para eliminar la campaña "${campaign.name}" (5-1000 caracteres):`
+  );
+  if (reason === null) return;
+
+  const deletionReason = reason.trim();
+  if (deletionReason.length < 5 || deletionReason.length > 1000) {
+    setCampaignActionError(
+      "Indica un motivo de eliminación de entre 5 y 1000 caracteres."
+    );
+    return;
+  }
+
+  const collaborationsCount = campaign.creators?.length || 0;
+  const deliverablesCount = (campaign.creators || []).reduce(
+    (total, creator) => total + (creator.deliverables?.length || 0),
+    0
+  );
+
+  const confirmed = window.confirm(
+    `¿Retirar "${campaign.name}" de las campañas operativas?\n\n` +
+      `Estado actual: ${getCampaignStatusLabel(campaign.status)}\n` +
+      `Colaboraciones visibles: ${collaborationsCount}\n` +
+      `Entregables visibles: ${deliverablesCount}\n\n` +
+      "La eliminación es lógica: se conserva el historial y los compromisos económicos. " +
+      "Esta acción no cancela pagos ni acuerdos pendientes.\n\n" +
+      `Motivo: ${deletionReason}`
+  );
+  if (!confirmed) return;
+
+  try {
+    setDeletingCampaign(true);
+    setCampaignActionError("");
+    await api.delete(`/api/admin/campaigns/${id}`, {
+      confirmation: "DELETE_CAMPAIGN",
+      reason: deletionReason,
+    });
+    window.location.assign("/admin/campaigns");
+  } catch (err) {
+    setCampaignActionError(
+      err?.response?.data?.message ||
+        err?.data?.message ||
+        err?.data?.error ||
+        err?.message ||
+        "No se ha podido eliminar la campaña."
+    );
+  } finally {
+    setDeletingCampaign(false);
+  }
+}
 
 
   const totalCreatorFees = useMemo(() => {
@@ -1246,7 +1394,7 @@ async function updateCollaborationStatus(
 
 
 
-  if (error || !campaign) {
+  if (!campaign) {
 
     return (
 
@@ -1331,30 +1479,86 @@ async function updateCollaborationStatus(
 
 
         
-        <div className="flex flex-wrap items-center gap-3">
-  <Link
-    to={`/admin/campaigns/${campaign.id}/edit`}
-    className="rounded-full border border-black/10 px-5 py-2.5 text-[9px] font-medium uppercase tracking-[0.12em] transition hover:border-black"
-  >
-    Editar campaña
-  </Link>
-   <Link
-    to={`/admin/campaigns/${campaign.id}/manage`}
-    className="rounded-full bg-black px-5 py-3 text-[10px] font-medium uppercase tracking-[0.14em] text-white transition hover:bg-black/80"
-  >
-    Gestionar campaña →
-  </Link>
-
-  <span className="inline-flex w-fit rounded-full bg-black px-4 py-2 text-[9px] uppercase tracking-[0.12em] text-white">
-    {getCampaignStatusLabel(
-      campaign.status
-    )}
-  </span>
-</div>
-
+        <div className="flex flex-col items-start gap-3 md:items-end">
+          <span className="inline-flex rounded-full bg-black px-4 py-2 text-[9px] uppercase tracking-[0.12em] text-white">
+            {getCampaignStatusLabel(campaign.status)}
+          </span>
+          <div className="flex flex-wrap items-center gap-2 md:justify-end">
+            {["DRAFT", "ACTIVE"].includes(campaign.status) && (
+              <Link
+                to={`/admin/campaigns/${campaign.id}/edit`}
+                className="rounded-full border border-black/10 px-4 py-2.5 text-[10px] font-medium transition hover:border-black"
+              >
+                Editar campaña
+              </Link>
+            )}
+            {!["ARCHIVED", "DELETED"].includes(campaign.status) && (
+              <Link
+                to={`/admin/campaigns/${campaign.id}/manage`}
+                className="rounded-full bg-black px-4 py-2.5 text-[10px] font-medium text-white transition hover:bg-black/80"
+              >
+                Gestionar campaña →
+              </Link>
+            )}
+            {campaign.status === "DRAFT" && (
+              <button type="button" onClick={() => changeCampaignStatus("ACTIVE")}
+                disabled={campaignActionBusy}
+                className="rounded-full border border-emerald-600/30 px-4 py-2.5 text-[10px] font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">
+                {changingCampaignStatus ? "Actualizando..." : "Activar"}
+              </button>
+            )}
+            {campaign.status === "ACTIVE" && (
+              <>
+                <button type="button" onClick={() => changeCampaignStatus("COMPLETED")}
+                  disabled={campaignActionBusy}
+                  className="rounded-full border border-emerald-600/30 px-4 py-2.5 text-[10px] font-medium text-emerald-700 hover:bg-emerald-50 disabled:opacity-50">
+                  {changingCampaignStatus ? "Actualizando..." : "Finalizar"}
+                </button>
+                <button type="button" onClick={() => changeCampaignStatus("CANCELLED")}
+                  disabled={campaignActionBusy}
+                  className="rounded-full border border-amber-600/30 px-4 py-2.5 text-[10px] font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50">
+                  {changingCampaignStatus ? "Actualizando..." : "Cancelar"}
+                </button>
+              </>
+            )}
+            {campaign.status === "DRAFT" && (
+              <button type="button" onClick={() => changeCampaignStatus("CANCELLED")}
+                disabled={campaignActionBusy}
+                className="rounded-full border border-amber-600/30 px-4 py-2.5 text-[10px] font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50">
+                Cancelar
+              </button>
+            )}
+            {!["ARCHIVED", "DELETED"].includes(campaign.status) && (
+              <button type="button" onClick={archiveCampaign}
+                disabled={campaignActionBusy}
+                className="rounded-full border border-amber-600/30 px-4 py-2.5 text-[10px] font-medium text-amber-700 hover:bg-amber-50 disabled:opacity-50">
+                {archivingCampaign ? "Archivando..." : "Archivar"}
+              </button>
+            )}
+            {campaign.status !== "DELETED" && (
+              <button type="button" onClick={deleteCampaign}
+                disabled={campaignActionBusy}
+                className="rounded-full border border-red-600/30 px-4 py-2.5 text-[10px] font-medium text-red-700 hover:bg-red-50 disabled:opacity-50">
+                {deletingCampaign ? "Eliminando..." : "Eliminar"}
+              </button>
+            )}
+          </div>
+          {campaignActionError && (
+            <p role="alert" className="max-w-xl text-sm text-red-600">
+              {campaignActionError}
+            </p>
+          )}
+        </div>
       </div>
 
-
+{error && (
+  <div
+    role="alert"
+    className="mb-6 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700"
+  >
+    {error}
+  </div>
+)}
 
       <div className="grid gap-4 md:grid-cols-4">
 
@@ -1638,10 +1842,29 @@ async function updateCollaborationStatus(
 
             <div className="divide-y divide-black/5">
 
-  {campaign.creators.map((collaboration) => (
+ {campaign.creators.map((collaboration) => {
+  const deliverables = collaboration.deliverables || [];
 
+  const allPublicationsVerified =
+    deliverables.length > 0 &&
+    deliverables.every(
+      (deliverable) =>
+        deliverable.status === "APPROVED" &&
+        Boolean(deliverable.publishedUrl) &&
+        Boolean(deliverable.publishedAt) &&
+        Boolean(deliverable.publicationVerifiedAt)
+    );
+
+  const canMarkPublished = allPublicationsVerified;
+
+  const canMarkPaid =
+    collaboration.status === "PUBLISHED" &&
+    ["PAID", "PAID_AND_PRODUCT"].includes(
+      campaign.collaborationType
+    );
+
+  return (
     <div
-
       key={collaboration.id}
 
       className="px-6 py-6"
@@ -1710,387 +1933,212 @@ async function updateCollaborationStatus(
 
         </div>
 
-        {/* PROPUESTA AL CLIENTE */}
-
-
-
-{collaboration.status === "PENDING" && (
-
-  <div className="rounded-xl border border-black/10 bg-white p-4">
-
-    <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
-
-
-
-      <div>
-
-        <p className="text-[9px] uppercase tracking-[0.14em] text-black/35">
-
-          Propuesta
-
-        </p>
-
-
-
-        <p className="mt-2 text-sm font-medium">
-
-          Este creador todavía no se ha presentado al cliente.
-
-        </p>
-
-
-
-        <p className="mt-1 text-xs leading-5 text-black/40">
-
-          Puedes mantenerlo como selección interna o enviarlo al portal del cliente.
-
-        </p>
-
-      </div>
-
-
-
-      <button
-
-        type="button"
-
-        onClick={() =>
-
-          updateCollaborationStatus(
-
-            collaboration.id,
-
-            "PROPOSED"
-
-          )
-
-        }
-
-        disabled={
-
-          updatingCollaborationId ===
-
-          collaboration.id
-
-        }
-
-        className="shrink-0 rounded-full bg-black px-5 py-3 text-[9px] font-medium uppercase tracking-[0.12em] text-white transition hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-40"
-
-      >
-
-        {updatingCollaborationId === collaboration.id
-
-          ? "Enviando..."
-
-          : "Enviar al cliente"}
-
-      </button>
-
-
-
-    </div>
-
-  </div>
-
-)}
-
-{collaboration.status === "PROPOSED" && (
-
-  <div className="rounded-xl border border-black/10 bg-black/[0.025] p-4">
-
-    <p className="text-[9px] uppercase tracking-[0.14em] text-black/35">
-
-      Propuesta enviada
-
-    </p>
-
-
-
-    <p className="mt-2 text-sm font-medium">
-
-      Esperando decisión del cliente.
-
-    </p>
-
-  </div>
-
-)}
-
-
-
-{collaboration.status === "APPROVED" && (
-
-  <div className="rounded-xl border border-black/10 bg-black p-4 text-white">
-
-    <p className="text-[9px] uppercase tracking-[0.14em] text-white/50">
-
-      Propuesta
-
-    </p>
-
-
-
-    <p className="mt-2 text-sm font-medium">
-
-      Aprobado por el cliente
-
-    </p>
-
-  </div>
-
-)}
-
-
-
-{collaboration.status === "REJECTED" && (
-
-  <div className="rounded-xl border border-black/10 bg-black/[0.025] p-4">
-
-    <p className="text-[9px] uppercase tracking-[0.14em] text-black/35">
-
-      Propuesta
-
-    </p>
-
-
-
-    <p className="mt-2 text-sm font-medium text-black/50">
-
-      Rechazado por el cliente
-
-    </p>
-
-  </div>
-
-)}
-
-
+        
 
         {/* Estado de colaboración */}
 
-        <div className="rounded-xl bg-black/[0.025] p-4">
+<div className="rounded-xl bg-black/[0.025] p-4">
+  <label className="mb-2 block text-[9px] uppercase tracking-[0.12em] text-black/30">
+    Estado de colaboración
+  </label>
+
+  <select
+    value={collaboration.status}
+    onChange={(event) =>
+      updateCollaborationStatus(
+        collaboration.id,
+        event.target.value
+      )
+    }
+    disabled={
+      updatingCollaborationId === collaboration.id
+    }
+    className="w-full rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition focus:border-black/30 disabled:cursor-not-allowed disabled:opacity-60"
+  >
+    <option value="PENDING">Pendiente</option>
+
+    {["PROPOSED", "APPROVED", "REJECTED"].includes(
+      collaboration.status
+    ) && (
+      <option value={collaboration.status} disabled>
+        {getStatusLabel(collaboration.status)} (estado anterior)
+      </option>
+    )}
+
+    <option value="CONTACTED">Contactado</option>
+    <option value="ACCEPTED">Aceptado</option>
+    <option value="SELECTED">Seleccionado</option>
+
+    <option value="PRODUCT_SENT">
+      Producto enviado
+    </option>
+
+    <option value="CONTENT_PENDING">
+      Contenido pendiente
+    </option>
+
+    <option value="CONTENT_RECEIVED">
+      Contenido recibido
+    </option>
+
+    <option
+      value="PUBLISHED"
+      disabled={
+        !canMarkPublished &&
+        collaboration.status !== "PUBLISHED"
+      }
+    >
+      Publicado
+    </option>
+
+    <option
+      value="PAID"
+      disabled={
+        !canMarkPaid &&
+        collaboration.status !== "PAID"
+      }
+    >
+      Pagado
+    </option>
+  </select>
+
+  {updatingCollaborationId === collaboration.id && (
+    <p className="mt-2 text-xs text-black/40">
+      Actualizando estado...
+    </p>
+  )}
+</div>
+</div>
 
-          <label className="mb-2 block text-[9px] uppercase tracking-[0.12em] text-black/30">
-
-            Estado de colaboración
-
-          </label>
-
-
-
-          <select
-
-            value={collaboration.status}
-
-            onChange={(event) =>
-
-              updateCollaborationStatus(
-
-                collaboration.id,
-
-                event.target.value
-
-              )
-
-            }
-
-            disabled={
-
-              updatingCollaborationId ===
-
-              collaboration.id
-
-            }
-
-            className="w-full rounded-xl border border-black/10 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 outline-none transition focus:border-black/30 disabled:cursor-not-allowed disabled:opacity-60"
-
-          >
-
-            <option value="PENDING">
-
-              Pendiente
-
-            </option>
-
-            <option value="PROPOSED">
-
-            Propuesto al cliente
-
-          </option>
-
-
-
-          <option value="APPROVED">
-
-            Aprobado por cliente
-
-          </option>
-
-
-
-          <option value="REJECTED">
-
-            Rechazado por cliente
-
-          </option>
-
-
-
-            <option value="CONTACTED">
-
-              Contactado
-
-            </option>
-
-
-
-            <option value="ACCEPTED">
-
-              Aceptado
-
-            </option>
-
-
-
-            <option value="SELECTED">
-
-              Seleccionado
-
-            </option>
-
-
-
-            <option value="PRODUCT_SENT">
-
-              Producto enviado
-
-            </option>
-
-
-
-            <option value="CONTENT_PENDING">
-
-              Contenido pendiente
-
-            </option>
-
-
-
-            <option value="CONTENT_RECEIVED">
-
-              Contenido recibido
-
-            </option>
-
-
-
-            <option value="PUBLISHED">
-
-              Publicado
-
-            </option>
-
-
-
-            <option value="PAID">
-
-              Pagado
-
-            </option>
-
-          </select>
-
-
-
-          {updatingCollaborationId ===
-
-            collaboration.id && (
-
-            <p className="mt-2 text-xs text-black/40">
-
-              Actualizando estado...
-
-            </p>
-
-          )}
-
-        </div>
-
-      </div>
 
 
 
       {/* Entregables */}
 
       {collaboration.deliverables?.length > 0 && (
+          <div className="mt-5 rounded-xl bg-black/[0.025] p-4">
+            <p className="text-[9px] uppercase tracking-[0.12em] text-black/30">
+              Entregables y publicaciones
+            </p>
 
-        <div className="mt-5 rounded-xl bg-black/[0.025] p-4">
+            <div className="mt-4 space-y-3">
+              {collaboration.deliverables.map((deliverable) => {
+                const isApproved =
+                  deliverable.status === "APPROVED";
 
-          <p className="text-[9px] uppercase tracking-[0.12em] text-black/30">
+                const hasPublication =
+                  Boolean(deliverable.publishedUrl) &&
+                  Boolean(deliverable.publishedAt);
 
-            Entregables
+                const isVerified =
+                  Boolean(deliverable.publicationVerifiedAt);
 
-          </p>
+                const canVerify =
+                  isApproved &&
+                  hasPublication &&
+                  !isVerified;
 
+                const verifying =
+                  verifyingDeliverableId === deliverable.id;
 
+                return (
+                  <div
+                    key={deliverable.id}
+                    className="rounded-xl border border-black/10 bg-white p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium">
+                          {deliverable.type}
+                        </p>
 
-          <div className="mt-3 space-y-2">
+                        <p className="mt-1 text-xs text-black/40">
+                          {deliverable.platform ||
+                            "Plataforma no especificada"}
+                        </p>
+                      </div>
 
-            {collaboration.deliverables.map(
+                      <span className="rounded-full bg-black/5 px-3 py-1.5 text-[9px] uppercase tracking-[0.1em] text-black/55">
+                        {deliverable.status}
+                      </span>
+                    </div>
 
-              (deliverable) => (
+                    {hasPublication ? (
+                      <div className="mt-4 border-t border-black/10 pt-4">
+                        <p className="text-[9px] uppercase tracking-[0.12em] text-black/35">
+                          Publicación registrada
+                        </p>
 
-                <div
+                        <a
+                          href={deliverable.publishedUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 block break-all text-xs text-black/70 underline underline-offset-4"
+                        >
+                          {deliverable.publishedUrl}
+                        </a>
 
-                  key={deliverable.id}
+                        <p className="mt-2 text-xs text-black/40">
+                          Registrada:{" "}
+                          {formatDate(deliverable.publishedAt)}
+                        </p>
 
-                  className="flex items-center justify-between gap-4"
+                        {isVerified ? (
+                          <div className="mt-4">
+                            <span className="inline-flex rounded-full bg-black px-3 py-2 text-[9px] uppercase tracking-[0.1em] text-white">
+                              Publicación verificada
+                            </span>
 
-                >
-
-                  <div>
-
-                    <p className="text-xs font-medium">
-
-                      {deliverable.type}
-
-                    </p>
-
-
-
-                    <p className="mt-0.5 text-[10px] text-black/35">
-
-                      {deliverable.platform ||
-
-                        "Plataforma no especificada"}
-
-                    </p>
-
+                            <p className="mt-2 text-xs text-black/40">
+                              Verificada el{" "}
+                              {formatDate(
+                                deliverable.publicationVerifiedAt
+                              )}
+                            </p>
+                          </div>
+                        ) : canVerify ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              verifyPublication(deliverable.id)
+                            }
+                            disabled={verifying}
+                            className="mt-4 rounded-full bg-black px-5 py-2.5 text-[9px] uppercase tracking-[0.12em] text-white transition hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            {verifying
+                              ? "Verificando..."
+                              : "Verificar publicación"}
+                          </button>
+                        ) : (
+                          <p className="mt-3 text-xs text-black/40">
+                            El contenido debe estar aprobado
+                            para verificar la publicación.
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="mt-4 text-xs text-black/40">
+                        Todavía no se ha registrado
+                        ninguna publicación.
+                      </p>
+                    )}
                   </div>
+                );
+              })}
+            </div>
 
-
-
-                  <span className="text-[9px] uppercase tracking-[0.1em] text-black/40">
-
-                    {deliverable.status}
-
-                  </span>
-
-                </div>
-
-              )
-
+            {publicationError && (
+              <p className="mt-4 text-xs text-red-600">
+                {publicationError}
+              </p>
             )}
-
           </div>
-
-        </div>
-
-      )}
+        )}
 
     </div>
 
-  ))}
+  );
+})}
 
 </div>
 
@@ -2531,6 +2579,13 @@ async function updateCollaborationStatus(
             </div>
           </div>
         </div>
+        {applicationMessage && (
+  <div className="border-b border-black/10 bg-[#F4EDE2] px-6 py-4">
+    <p className="text-xs font-medium text-[#8A6340]">
+      {applicationMessage}
+    </p>
+  </div>
+)}
 
         {applicationsLoading ? (
           <div className="px-6 py-14 text-center">
@@ -2556,6 +2611,15 @@ async function updateCollaborationStatus(
 
               const processing =
                 applicationActionId === application.id;
+                const applicationProposal =
+                proposals.find(
+                  (proposal) =>
+                    proposal.creatorId ===
+                    application.creatorId
+                ) || null;
+
+              const awaitingClientApproval =
+                applicationProposal?.status === "PROPOSED";
 
               return (
                 <div key={application.id} className="px-6 py-5">
@@ -2632,28 +2696,42 @@ async function updateCollaborationStatus(
                       )}
 
                       {application.status === "SHORTLISTED" && (
-                        <>
-                          <span className="rounded-full bg-black/5 px-3 py-2 text-[8px] uppercase tracking-[0.12em] text-black/45">
-                            En shortlist
-                          </span>
+  <>
+    {awaitingClientApproval ? (
+      <>
+        <span className="rounded-full bg-[#F4EDE2] px-3 py-2 text-[8px] font-medium uppercase tracking-[0.12em] text-[#8A6340]">
+          Pendiente del cliente
+        </span>
 
-                          <button
-                            type="button"
-                            disabled={
-                              processing ||
-                              availableCreatorSlots === 0
-                            }
-                            onClick={() =>
-                              advanceApplication(application.id)
-                            }
-                            className="rounded-full bg-black px-4 py-2.5 text-[8px] uppercase tracking-[0.12em] text-white transition hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-30"
-                          >
-                            {processing
-                              ? "Procesando..."
-                              : "Continuar selección"}
-                          </button>
-                        </>
-                      )}
+        <span className="text-[9px] text-black/35">
+          Propuesta enviada
+        </span>
+      </>
+    ) : (
+      <>
+        <span className="rounded-full bg-black/5 px-3 py-2 text-[8px] uppercase tracking-[0.12em] text-black/45">
+          En shortlist
+        </span>
+
+        <button
+          type="button"
+          disabled={
+            processing ||
+            availableCreatorSlots === 0
+          }
+          onClick={() =>
+            advanceApplication(application.id)
+          }
+          className="rounded-full bg-black px-4 py-2.5 text-[8px] uppercase tracking-[0.12em] text-white transition hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          {processing
+            ? "Procesando..."
+            : "Continuar selección"}
+        </button>
+      </>
+    )}
+  </>
+)}
 
                       {application.status === "NOT_SELECTED" && (
                         <span className="rounded-full bg-black/5 px-3 py-2 text-[8px] uppercase tracking-[0.12em] text-black/35">

@@ -5,11 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js",
+    "start": "node dist/src/index.js",
     "build": "tsc",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
+    "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
+    "build:production": "prisma generate && tsc",
     "staff:seed-admin": "tsx prisma/seed-admin.ts",
     "creators:seed": "tsx prisma/seed-creators.ts"
   },
@@ -23,7 +25,8 @@
     "dotenv": "^17.0.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.0",
-    "pg": "^8.0.0"
+    "pg": "^8.0.0",
+    "resend": "^6.33.0"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

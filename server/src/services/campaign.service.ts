@@ -64,6 +64,9 @@ export async function getBrandCampaigns(
   return prisma.campaign.findMany({
     where: {
       brandId,
+      status: {
+        not: "DELETED",
+      },
     },
 
     include: {
@@ -93,6 +96,9 @@ export async function getBrandCampaignById(
     where: {
       id: campaignId,
       brandId,
+      status: {
+        not: "DELETED",
+      },
     },
 
     include: {
@@ -112,7 +118,6 @@ export async function getBrandCampaignById(
     },
   });
 }
-
 /**
  * ==========================================
  * CREATE CAMPAIGN

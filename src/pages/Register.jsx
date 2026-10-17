@@ -31,9 +31,13 @@ function Register() {
   username:"",
   invitationCode: "",
   privacyAccepted: false,
+  instagram: "",
+  tiktok: "",
+  youtube: "",
 
   // Brand / Agency
   companyName: "",
+  industry: "",
   website: "",
   phone: "",
   employeeCount: "",
@@ -72,87 +76,134 @@ function Register() {
     });
   };
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
 
-    setError("");
-    setSuccess("");
-    setLoading(true);
+const handleSubmit = async (event) => {
+  event.preventDefault();
 
-    try {
-      if (form.password.length < 8) {
-        throw new Error("PASSWORD_TOO_SHORT");
-      }
+  setError("");
+  setSuccess("");
+  setLoading(true);
 
-      let endpoint;
-      let body;
-
-      if (type === "brand") {
-        endpoint = "/api/auth/register/brand";
-
-        body = {
-          name: form.name,
-          email: form.email,
-          password: form.password,
-          companyName: form.companyName,
-        };
-      } else {
-        endpoint = "/api/auth/register/creator";
-
-        body = {
-          name: form.name,
-          email: form.email,
-          password: form.password,
-          username: form.username,
-        };
-      }
-
-      await apiFetch(endpoint, {
+  try {
+    if (type === "brand") {
+      // La marca solo envía una solicitud.
+      // No se crea ninguna cuenta todavía.
+      await apiFetch("/api/auth/register/brand", {
         method: "POST",
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          name: form.name.trim(),
+          lastName: form.lastName.trim(),
+          email: form.email.trim(),
+          country: form.country.trim(),
+          companyName: form.companyName.trim(),
+          website: form.website.trim(),
+          phone: form.phone.trim(),
+          employeeCount: form.employeeCount,
+          services: form.services,
+          needs: form.needs,
+          discoverySource: form.discoverySource,
+          industry: form.industry,
+        }),
       });
 
       setSuccess(
-        "Cuenta creada correctamente. Redirigiendo al acceso..."
+        "Solicitud enviada correctamente. Nuestro equipo revisará tus datos y se pondrá en contacto contigo por correo electrónico."
       );
 
-      setTimeout(() => {
-        navigate("/login", {
-          replace: true,
-        });
-      }, 1000);
-
-    } catch (error) {
-      console.error("Register error:", error);
-
-      if (error.message === "PASSWORD_TOO_SHORT") {
-        setError(
-          "La contraseña debe tener al menos 8 caracteres."
-        );
-      } else if (
-        error.status === 409 &&
-        error.data?.error === "EMAIL_ALREADY_EXISTS"
-      ) {
-        setError(
-          "Ya existe una cuenta con ese email."
-        );
-      } else if (
-        error.status === 409 &&
-        error.data?.error === "USERNAME_ALREADY_EXISTS"
-      ) {
-        setError(
-          "Ese nombre de usuario ya está registrado."
-        );
-      } else {
-        setError(
-          "No se ha podido crear la cuenta. Comprueba los datos e inténtalo de nuevo."
-        );
-      }
-
-    } finally {
-      setLoading(false);
+      return;
     }
-  };
+
+   
+    // Registro de creadores:
+    // Se envía una solicitud, sin crear una cuenta activa.
+
+    const hasSocialProfile = [
+      form.instagram,
+      form.tiktok,
+      form.youtube,
+    ].some((value) => value?.trim());
+
+    if (!hasSocialProfile) {
+      throw new Error("SOCIAL_PROFILE_REQUIRED");
+    }
+
+    await apiFetch("/api/auth/register/creator", {
+      method: "POST",
+      body: JSON.stringify({
+        name: form.name.trim(),
+        lastName: form.lastName.trim(),
+        username: form.username.trim(),
+        email: form.email.trim(),
+        country: form.country.trim(),
+        invitationCode: form.invitationCode?.trim() || null,
+        instagram: form.instagram?.trim() || null,
+        tiktok: form.tiktok?.trim() || null,
+        youtube: form.youtube?.trim() || null,
+        privacyAccepted: form.privacyAccepted,
+      }),
+    });
+
+    setSuccess(
+      "Solicitud enviada correctamente. Nuestro equipo revisará tus redes sociales y te notificará por correo electrónico."
+    );
+
+
+  } catch (error) {
+    console.error("Register error:", error);
+
+    if (error.message === "PASSWORD_TOO_SHORT") {
+      setError(
+        "La contraseña debe tener al menos 8 caracteres."
+      );
+    }else if (error.data?.error === "SOCIAL_PROFILE_REQUIRED") {
+  setError("Debes indicar al menos una red social.");
+} else if (error.data?.error === "PRIVACY_REQUIRED") {
+  setError("Debes aceptar la política de privacidad.");
+} else if (error.data?.error === "INVALID_USERNAME") {
+  setError(
+    "El nombre de usuario debe tener entre 3 y 30 caracteres y solo puede contener letras, números, puntos y guiones bajos."
+  );
+} else if (
+  error.data?.error === "USERNAME_REQUEST_ALREADY_PENDING"
+) {
+  setError("Ya existe una solicitud pendiente con ese nombre de usuario.");
+}
+    else if (error.message === "PASSWORD_MISMATCH") {
+      setError("Las contraseñas no coinciden.");
+    } else if (
+      error.status === 409 &&
+      error.data?.error === "EMAIL_ALREADY_EXISTS"
+    ) {
+      setError("Ya existe una cuenta con ese correo electrónico.");
+    } else if (
+      error.status === 409 &&
+      error.data?.error === "REQUEST_ALREADY_PENDING"
+    ) {
+      setError(
+        "Ya existe una solicitud pendiente para este correo electrónico."
+      );
+    } else if (
+      error.status === 409 &&
+      error.data?.error === "USERNAME_ALREADY_EXISTS"
+    ) {
+      setError("Ese nombre de usuario ya está registrado.");
+    } else if (
+      error.data?.error === "INVALID_EMAIL"
+    ) {
+      setError("Introduce un correo electrónico válido.");
+    } else {
+      setError(
+        type === "brand"
+          ? "No se ha podido enviar la solicitud. Inténtalo de nuevo."
+          : "No se ha podido crear la cuenta. Comprueba los datos e inténtalo de nuevo."
+        
+      );
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-[#F4EDE2] text-[#3E2B1B]">
@@ -239,13 +290,17 @@ function Register() {
               Registro
             </p>
 
-            <h2 className="mt-3 text-4xl font-medium tracking-[-0.05em]">
-              Crea tu cuenta.
-            </h2>
+           <h2 className="mt-3 text-4xl font-medium tracking-[-0.05em]">
+  {type === "brand"
+    ? "Trabajemos juntos."
+    : "Crea tu cuenta."}
+</h2>
 
-            <p className="mt-4 text-sm leading-relaxed text-black/50">
-              Elige cómo quieres formar parte de ST.MARY AGENCY.
-            </p>
+           <p className="mt-4 text-sm leading-relaxed text-black/50">
+  {type === "brand"
+    ? "Cuéntanos sobre tu marca y qué necesitas. Nuestro equipo estudiará tu solicitud y se pondrá en contacto contigo."
+    : "Únete a nuestra comunidad de creadores y empieza a colaborar con marcas."}
+</p>
 
 
             {/* TYPE SELECTOR */}
@@ -350,16 +405,17 @@ function Register() {
 
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || (type === "brand" && Boolean(success))}
                 className="mt-7 w-full rounded-full bg-black px-6 py-4 text-[10px] font-medium uppercase tracking-[0.16em] text-white transition-all hover:scale-[1.01] disabled:cursor-not-allowed disabled:opacity-50"
               >
 
-                {loading
-                  ? "Creando cuenta..."
-                  : type === "brand"
-                    ? "Crear cuenta de marca"
-                    : "Crear cuenta de creador"}
-
+               {loading
+  ? type === "brand"
+    ? "Enviando solicitud..."
+    : "Creando cuenta..."
+  : type === "brand"
+    ? "Enviar solicitud"
+    : "Crear cuenta de creador"}
               </button>
 
             </form>

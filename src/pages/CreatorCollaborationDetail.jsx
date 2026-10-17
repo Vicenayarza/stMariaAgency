@@ -152,7 +152,44 @@ function CreatorCollaborationDetail() {
       setActionLoading(false);
     }
   }
+async function handlePublishDeliverable(
+  deliverableId,
+  publishedUrl
+) {
+  try {
+    setActionLoading(true);
+    setActionError("");
+    setActionSuccess("");
 
+    const result = await api.patch(
+      `/deliverables/${deliverableId}/publish`,
+      { publishedUrl }
+    );
+
+    setCollaboration((current) => ({
+      ...current,
+      deliverables: current.deliverables.map(
+        (deliverable) =>
+          deliverable.id === deliverableId
+            ? { ...deliverable, ...result.deliverable }
+            : deliverable
+      ),
+    }));
+
+    setActionSuccess(
+      "Publicación registrada correctamente. ST.MARY AGENCY comprobará el enlace."
+    );
+  } catch (err) {
+    console.error(err);
+
+    setActionError(
+      err?.message ||
+        "No hemos podido registrar la publicación."
+    );
+  } finally {
+    setActionLoading(false);
+  }
+}
   const deliverables =
     collaboration?.deliverables || [];
 
@@ -454,8 +491,13 @@ function CreatorCollaborationDetail() {
                   !canSubmitContent ||
                   deliverable.status === "APPROVED"
                 }
+                publicationDisabled={
+                  actionLoading ||
+                  !canSubmitContent
+                }
                 onSave={handleDeliverableUpdate}
-              />
+                onPublish={handlePublishDeliverable}
+/>
             ))}
 
           </div>
@@ -515,7 +557,9 @@ function DeliverableCard({
   deliverable,
   index,
   disabled,
+  publicationDisabled,
   onSave,
+  onPublish,
 }) {
   const latestRejectedReview =
   deliverable.reviews?.find(
@@ -529,6 +573,24 @@ function DeliverableCard({
   const [notes, setNotes] = useState(
     deliverable.notes || ""
   );
+  const [publishedUrl, setPublishedUrl] = useState(
+  deliverable.publishedUrl || ""
+);
+
+const canPublish =
+  deliverable.status === "APPROVED" &&
+  !deliverable.publishedAt &&
+  !publicationDisabled &&
+  Boolean(publishedUrl.trim());
+
+function handlePublish() {
+  if (!canPublish) return;
+
+  onPublish(
+    deliverable.id,
+    publishedUrl.trim()
+  );
+}
 
   const canEdit =
   !disabled &&
@@ -671,10 +733,71 @@ function DeliverableCard({
         )}
 
         {deliverable.status === "APPROVED" && (
-          <p className="mt-4 text-xs text-black/40">
-            Este contenido ha sido aprobado por ST.MARY AGENCY.
-          </p>
-        )}
+  <div className="mt-6 rounded-xl border border-black/10 bg-black/[0.025] p-5">
+    <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-black/60">
+      Publicación del contenido
+    </p>
+
+    {deliverable.publishedAt ? (
+      <div className="mt-4">
+        <p className="text-sm text-black/60">
+          Has registrado esta publicación.
+          ST.MARY AGENCY comprobará el enlace.
+        </p>
+
+        <a
+          href={deliverable.publishedUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-block break-all text-sm underline underline-offset-4"
+        >
+          Ver publicación
+        </a>
+
+        <p className="mt-3 text-xs text-black/40">
+          Registrada el{" "}
+          {formatDate(deliverable.publishedAt)}
+        </p>
+      </div>
+    ) : (
+      <>
+        <p className="mt-3 text-sm leading-relaxed text-black/50">
+          Tu contenido está aprobado.
+          Cuando lo publiques en la red social,
+          introduce aquí el enlace público.
+        </p>
+
+        <label className="mt-5 block">
+          <span className="text-[9px] uppercase tracking-[0.14em] text-black/40">
+            Enlace de la publicación
+          </span>
+
+          <input
+            type="url"
+            value={publishedUrl}
+            onChange={(event) =>
+              setPublishedUrl(event.target.value)
+            }
+            disabled={publicationDisabled}
+            placeholder="https://www.instagram.com/reel/..."
+            className="mt-2 w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm outline-none transition focus:border-black/30 disabled:opacity-50"
+          />
+        </label>
+
+        <button
+          type="button"
+          onClick={handlePublish}
+          disabled={!canPublish}
+          className="mt-4 rounded-full bg-black px-6 py-3 text-[10px] uppercase tracking-[0.14em] text-white transition hover:bg-black/80 disabled:cursor-not-allowed disabled:opacity-30"
+        >
+          {publicationDisabled
+            ? "Guardando..."
+            : "Registrar publicación"}
+        </button>
+      </>
+    )}
+  </div>
+)}
 
         {deliverable.status === "IN_REVIEW" && (
           <p className="mt-4 text-xs text-black/40">

@@ -71,9 +71,13 @@ export const api = {
     });
   },
 
-  delete(path) {
-    return request(path, {
-      method: "DELETE",
-    });
-  },
+
+delete(path, body = undefined) {
+  return request(path, {
+    method: "DELETE",
+    ...(body !== undefined
+      ? { body: JSON.stringify(body) }
+      : {}),
+  });
+},
 };

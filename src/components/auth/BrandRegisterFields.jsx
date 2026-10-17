@@ -67,6 +67,39 @@ function BrandRegisterFields({
           inputClass={inputClass}
           labelClass={labelClass}
         />
+        <div>
+  <label
+    htmlFor="brand-industry"
+    className="block text-sm font-medium text-[#3E2B1B]"
+  >
+    Sector de actividad *
+  </label>
+
+  <select
+    id="brand-industry"
+    name="industry"
+    required
+    value={form.industry || ""}
+    onChange={handleChange}
+    className="mt-2 w-full rounded-xl border border-[#D8C3A5] bg-white px-4 py-3 text-sm text-[#3E2B1B] outline-none focus:border-[#8A6340]"
+  >
+    <option value="">Selecciona un sector</option>
+    <option value="Moda y accesorios">Moda y accesorios</option>
+    <option value="Belleza y cosmética">Belleza y cosmética</option>
+    <option value="Alimentación y bebidas">Alimentación y bebidas</option>
+    <option value="Tecnología y electrónica">Tecnología y electrónica</option>
+    <option value="Salud y bienestar">Salud y bienestar</option>
+    <option value="Viajes y turismo">Viajes y turismo</option>
+    <option value="Hogar y decoración">Hogar y decoración</option>
+    <option value="Deporte y fitness">Deporte y fitness</option>
+    <option value="Automoción">Automoción</option>
+    <option value="Entretenimiento y ocio">Entretenimiento y ocio</option>
+    <option value="Educación y formación">Educación y formación</option>
+    <option value="Finanzas y seguros">Finanzas y seguros</option>
+    <option value="Inmobiliaria">Inmobiliaria</option>
+    <option value="Otros">Otros</option>
+  </select>
+</div>
 
         <Field
           label="Número de teléfono"
@@ -253,12 +286,32 @@ function BrandRegisterFields({
           </option>
         </select>
       </div>
+<div className="mt-6">
+  <label className="flex items-start gap-3 text-xs leading-relaxed text-[#6F6052]">
+    <input
+      type="checkbox"
+      name="privacyAccepted"
+      checked={form.privacyAccepted}
+      onChange={handleChange}
+      required
+      className="mt-1 accent-[#8A6340]"
+    />
 
-      <p className="mt-6 text-xs leading-relaxed text-[#6F6052]">
-        Al enviar este formulario aceptas que
-        ST.MARY AGENCY trate tus datos para
-        responder a tu solicitud de información.
-      </p>
+    <span>
+      He leído y acepto la{" "}
+      <a
+        href="/politica-de-privacidad"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-medium underline"
+      >
+        política de privacidad
+      </a>
+      {" "}y autorizo el tratamiento de mis datos
+      para gestionar esta solicitud.
+    </span>
+  </label>
+</div>
     </div>
   );
 }

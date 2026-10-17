@@ -6,9 +6,11 @@ import stmaryLogoLight from "./assets/brand/stmary-logo-horizontal-crema.svg";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Calculator from "./pages/Calculator";
+import ActivateAccount from "./pages/ActivateAccount";
 
 import Dashboard from "./pages/Dashboard";
 import DashboardLayout from "./components/DashboardLayout";
+import AccountSettings from "./pages/AccountSettings";
 
 import Campaigns from "./pages/Campaigns";
 import NewCampaign from "./pages/NewCampaign";
@@ -48,6 +50,8 @@ import AdminFinance from "./pages/AdminFinance";
 import AdminNewCampaign from "./pages/AdminNewCampaign";
 import AdminCampaignManagement from "./pages/AdminCampaignManagement";
 import AdminCollaborationDetail from "./pages/AdminCollaborationDetail";
+import AdminBrandRequests from "./pages/AdminBrandRequests";
+import AdminCreatorRequests from "./pages/AdminCreatorRequests";
 
 const services = [
   {
@@ -139,61 +143,71 @@ function Landing() {
     </div>
 
     {/* DESKTOP ACTIONS */}
-<div className="hidden items-center gap-3 lg:flex">
-  <a
-    href="#contact"
-    className="inline-flex items-center justify-center rounded-full border border-[#5A3E28]/20 px-5 py-3 text-[9px] font-medium uppercase tracking-[0.14em] transition-colors hover:bg-[#8A6340] hover:text-[#F4EDE2]"
-  >
-    Hablemos
-  </a>
 
-  <a
-    href="/login"
-    className="inline-flex items-center justify-center rounded-full border border-[#8A6340] px-5 py-3 text-[9px] font-medium uppercase tracking-[0.14em] text-[#8A6340] transition-colors hover:bg-[#8A6340] hover:text-[#F4EDE2]"
-  >
-    Acceder
-  </a>
+    <div className="hidden items-center gap-3 lg:flex">
+      <a
+        href="#contact"
+        className="rounded-full border border-[#5A3E28]/20 px-5 py-3 text-[9px] font-medium uppercase tracking-[0.14em] transition-colors hover:bg-[#8A6340] hover:text-[#F4EDE2]"
+      >
+        Hablemos
+      </a>
 
-  {/* REGISTER DROPDOWN */}
-  <div className="relative inline-flex">
-    <button
-      type="button"
-      onClick={() => setRegisterOpen((current) => !current)}
-      className="inline-flex items-center justify-center rounded-full border border-[#8A6340] px-5 py-3 text-[9px] font-medium uppercase tracking-[0.14em] text-[#8A6340] transition-colors hover:bg-[#8A6340] hover:text-[#F4EDE2]"
-    >
-      Crear cuenta
-    </button>
+      <a
+        href="/login"
+        className="rounded-full border border-[#8A6340] px-5 py-3 text-[9px] font-medium uppercase tracking-[0.14em] text-[#8A6340] transition-colors hover:bg-[#8A6340] hover:text-[#F4EDE2]"
+      >
+        Acceder
+      </a>
 
-    {registerOpen && (
-      <div className="absolute right-0 top-full mt-3 w-64 overflow-hidden rounded-2xl border border-[#5A3E28]/10 bg-[#F4EDE2] p-2 shadow-xl z-50">
-        <a
-          href="/register?type=creator"
-          className="block rounded-xl px-4 py-4 transition-colors hover:bg-[#EBDCC4]"
-          onClick={() => setRegisterOpen(false)}
+      {/* REGISTER DROPDOWN */}
+
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() =>
+            setRegisterOpen((current) => !current)
+          }
+          className="rounded-full border border-[#8A6340] px-5 py-3 text-[9px] font-medium uppercase tracking-[0.14em] text-[#8A6340] transition-colors hover:bg-[#8A6340] hover:text-[#F4EDE2]"
         >
-          <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-[#3E2B1B]">
-            Cuenta de creador
-          </span>
-          <span className="mt-1 block text-xs text-[#6F6052]">
-            Únete como creador de contenido.
-          </span>
-        </a>
+          Crear cuenta 
+        </button>
 
-        <a
-          href="/register?type=brand"
-          className="mt-1 block rounded-xl px-4 py-4 transition-colors hover:bg-[#EBDCC4]"
-          onClick={() => setRegisterOpen(false)}
-        >
-          <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-[#3E2B1B]">
-            Marca / Agencia
-          </span>
-          <span className="mt-1 block text-xs text-[#6F6052]">
-            Trabaja con ST.MARY AGENCY.
-          </span>
-        </a>
+        {registerOpen && (
+          <div className="absolute right-0 top-full mt-3 w-64 overflow-hidden rounded-2xl border border-[#5A3E28]/10 bg-[#F4EDE2] p-2 shadow-xl">
+            <a
+              href="/register?type=creator"
+              className="block rounded-xl px-4 py-4 transition-colors hover:bg-[#EBDCC4]"
+              onClick={() =>
+                setRegisterOpen(false)
+              }
+            >
+              <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-[#3E2B1B]">
+                Cuenta de creador
+              </span>
+
+              <span className="mt-1 block text-xs text-[#6F6052]">
+                Únete como creador de contenido.
+              </span>
+            </a>
+
+            <a
+              href="/register?type=brand"
+              className="mt-1 block rounded-xl px-4 py-4 transition-colors hover:bg-[#EBDCC4]"
+              onClick={() =>
+                setRegisterOpen(false)
+              }
+            >
+              <span className="block text-[10px] font-medium uppercase tracking-[0.14em] text-[#3E2B1B]">
+                Marca / Agencia
+              </span>
+
+              <span className="mt-1 block text-xs text-[#6F6052]">
+                Trabaja con ST.MARY AGENCY.
+              </span>
+            </a>
+          </div>
+        )}
       </div>
-    )}
-  </div>
     </div>
 
     {/* MOBILE BUTTON */}
@@ -844,6 +858,7 @@ function App() {
             path="/login"
             element={<Login />}
           />
+          <Route path="/activate-account" element={<ActivateAccount />} />
 
           <Route
             path="/register"
@@ -868,7 +883,7 @@ function App() {
             path="brands/:brandId/campaigns/new"
             element={<AdminNewCampaign />}
           />
-
+<Route path="settings" element={<AccountSettings />} />
           <Route path="creators" element={<AdminCreators />} />
           <Route
             path="creators/:id"
@@ -894,8 +909,16 @@ function App() {
   }
 />
 <Route
+  path="/admin/brand-requests"
+  element={<AdminBrandRequests />}
+/>
+<Route
   path="/admin/campaigns/:campaignId/creators/:campaignCreatorId"
   element={<AdminCollaborationDetail />}
+/>
+<Route
+  path="creator-requests"
+  element={<AdminCreatorRequests />}
 />
           <Route path="finance" element={<AdminFinance />} />
           <Route
@@ -923,6 +946,7 @@ function App() {
       index
       element={<Dashboard />}
     />
+    <Route path="settings" element={<AccountSettings />} />
 
     {/* =====================
         VER CAMPAÑAS
@@ -1072,6 +1096,7 @@ function App() {
                 index
                 element={<CreatorDashboard />}
               />
+              <Route path="settings" element={<AccountSettings />} />
 
               <Route
                 path="campaigns"

@@ -1,7 +1,5 @@
 import { Router } from "express";
 
-
-
 import { prisma } from "../lib/prisma.js";
 
 import {
@@ -11,6 +9,9 @@ import {
   requireAuth,
 
 } from "../middleware/auth.middleware.js";
+import {
+  notifyStaff,
+} from "../services/notification.service.js";
 
 
 
@@ -327,6 +328,18 @@ router.post(
           },
         },
       });
+      /*
+ * ==========================================
+ * NOTIFICATION → STAFF
+ * ==========================================
+ */
+
+await notifyStaff({
+  type: "APPLICATION",
+  title: "Nueva candidatura",
+  message: `${creator.user.name} se ha apuntado a la campaña ${campaign.name}.`,
+  link: `/admin/campaigns/${campaign.id}/manage`,
+});
 
       return res.status(201).json({
         application,
@@ -520,11 +533,13 @@ router.get(
         await prisma.campaignApplication.findMany({
 
           where: {
-
-            creatorId: creator.id,
-
-          },
-
+  creatorId: creator.id,
+  campaign: {
+    status: {
+      not: "DELETED",
+    },
+  },
+},
 
 
           include: {
@@ -640,10 +655,13 @@ router.get(
         await prisma.campaignCreator.findMany({
 
           where: {
-
-            creatorId: creator.id,
-
-          },
+  creatorId: creator.id,
+  campaign: {
+    status: {
+      not: "DELETED",
+    },
+  },
+},
 
           include: {
 
@@ -900,10 +918,13 @@ router.get(
         await prisma.campaignCreator.findMany({
 
           where: {
-
-            creatorId: creator.id,
-
-          },
+  creatorId: creator.id,
+  campaign: {
+    status: {
+      not: "DELETED",
+    },
+  },
+},
 
           include: {
 
@@ -1056,6 +1077,11 @@ router.get(
             id,
 
             creatorId: creator.id,
+            campaign: {
+  status: {
+    not: "DELETED",
+  },
+},
 
           },
 
@@ -1233,6 +1259,11 @@ router.patch(
             id,
 
             creatorId: creator.id,
+            campaign: {
+  status: {
+    not: "DELETED",
+  },
+},
 
           },
 
@@ -1409,6 +1440,11 @@ router.get(
             id,
 
             creatorId: creator.id,
+            campaign: {
+  status: {
+    not: "DELETED",
+  },
+},
 
           },
 
@@ -1576,17 +1612,17 @@ router.patch(
 
         await prisma.deliverable.findFirst({
 
-          where: {
-
-            id,
-
-            campaignCreator: {
-
-              creatorId: creator.id,
-
-            },
-
-          },
+         where: {
+  id,
+  campaignCreator: {
+    creatorId: creator.id,
+    campaign: {
+      status: {
+        not: "DELETED",
+      },
+    },
+  },
+},
 
           include: {
 
@@ -1917,6 +1953,26 @@ router.patch(
         },
 
       });
+      /*
+ * ==========================================
+ * NOTIFICATION → STAFF
+ * ==========================================
+ *
+ * Solo notificamos cuando el creador
+ * realmente envía el contenido a revisión.
+ */
+
+if (
+  status === "SUBMITTED" &&
+  deliverable.status !== "SUBMITTED"
+) {
+  await notifyStaff({
+    type: "DELIVERABLE",
+    title: "Nuevo contenido para revisar",
+    message: `${creator.user.name} ha enviado contenido de la campaña ${deliverable.campaignCreator.campaign.name}.`,
+    link: `/admin/campaigns/${deliverable.campaignCreator.campaign.id}/manage`,
+  });
+}
 
 
 
@@ -1998,11 +2054,14 @@ router.get(
 
         await prisma.campaignCreator.findMany({
 
-          where: {
-
-            creatorId: creator.id,
-
-          },
+         where: {
+  creatorId: creator.id,
+  campaign: {
+    status: {
+      not: "DELETED",
+    },
+  },
+},
 
           include: {
 

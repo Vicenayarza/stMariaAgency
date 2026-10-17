@@ -45,25 +45,23 @@ function CampaignProposals() {
     loadProposals();
   }, [campaignId]);
 
-  async function loadProposals() {
+  async function loadProposals({ preserveError = false } = {}) {
     try {
       setLoading(true);
-      setError("");
+      if (!preserveError) setError("");
 
       const data = await api.get(
         `/api/campaigns/proposals/campaigns/${campaignId}`
       );
 
       setCampaign(data.campaign);
-      setStats(data.stats);
+      setStats(data.stats || {});
 
-      setProposals(
-        data.proposals || {
-          pending: [],
-          approved: [],
-          rejected: [],
-        }
-      );
+      setProposals({
+        pending: Array.isArray(data.proposals?.pending) ? data.proposals.pending : [],
+        approved: Array.isArray(data.proposals?.approved) ? data.proposals.approved : [],
+        rejected: Array.isArray(data.proposals?.rejected) ? data.proposals.rejected : [],
+      });
 
       setPermissions(
         data.permissions || {}
@@ -86,6 +84,7 @@ function CampaignProposals() {
     proposalId,
     status
   ) {
+    if (updatingId !== null) return;
     try {
       setUpdatingId(proposalId);
       setError("");
@@ -109,7 +108,7 @@ function CampaignProposals() {
           "La campaña ya ha alcanzado el número máximo de creadores."
         );
 
-        await loadProposals();
+        await loadProposals({ preserveError: true });
         return;
       }
 
@@ -121,7 +120,7 @@ function CampaignProposals() {
           "Esta propuesta ya ha sido respondida."
         );
 
-        await loadProposals();
+        await loadProposals({ preserveError: true });
         return;
       }
 
@@ -153,9 +152,11 @@ function CampaignProposals() {
     );
   }
 
+  const approvedCount = stats?.approved ?? proposals.approved.length;
+  const availableCount = stats?.available;
   const selectionComplete =
     campaign.targetCreatorCount != null &&
-    stats?.available === 0;
+    approvedCount >= Number(campaign.targetCreatorCount);
 
   return (
     <div>
@@ -204,14 +205,14 @@ function CampaignProposals() {
           label="Seleccionados"
           value={
             campaign.targetCreatorCount
-              ? `${stats.approved} / ${campaign.targetCreatorCount}`
-              : stats.approved
+              ? `${approvedCount} / ${campaign.targetCreatorCount}`
+              : approvedCount
           }
         />
 
         <Summary
           label="Plazas disponibles"
-          value={stats.available ?? "—"}
+          value={availableCount ?? "—"}
         />
       </div>
 
@@ -257,8 +258,7 @@ function CampaignProposals() {
                     selectionComplete
                   }
                   updating={
-                    updatingId ===
-                    proposal.id
+                    updatingId !== null
                   }
                   onApprove={() =>
                     decide(
@@ -387,12 +387,12 @@ function ProposalCard({
   const followers =
     creator?.followers ??
     external?.followers ??
-    0;
+    null;
 
   const engagement =
     creator?.engagementRate ??
     external?.engagementRate ??
-    0;
+    null;
 
   const profileUrl =
     external?.profileUrl ||
@@ -431,16 +431,12 @@ function ProposalCard({
         <div className="flex flex-wrap items-center gap-6">
           <Metric
             label="Seguidores"
-            value={Number(
-              followers
-            ).toLocaleString("es-ES")}
+            value={followers == null ? "—" : Number(followers).toLocaleString("es-ES")}
           />
 
           <Metric
             label="Engagement"
-            value={`${Number(
-              engagement
-            ).toFixed(2)}%`}
+            value={engagement == null ? "—" : `${Number(engagement).toFixed(2)}%`}
           />
 
           {approved && (

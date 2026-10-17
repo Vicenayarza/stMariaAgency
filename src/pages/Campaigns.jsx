@@ -1,327 +1,197 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-
 import { apiFetch } from "../lib/api";
+import { useAuth } from "../context/AuthContext";
+
+const statusLabels = {
+  DRAFT: "Borrador",
+  ACTIVE: "Activa",
+  COMPLETED: "Finalizada",
+  CANCELLED: "Cancelada",
+  ARCHIVED: "Archivada",
+};
 
 function Campaigns() {
-  const [campaigns, setCampaigns] = useState([]);
+  const { membership, can } = useAuth();
+  const canCreateCampaign =
+    membership?.brand?.accessMode === "SELF_MANAGED" &&
+    can("canCreateCampaigns");
 
+  const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("ALL");
 
   useEffect(() => {
-    const loadCampaigns = async () => {
+    let cancelled = false;
+    async function loadCampaigns() {
       try {
         setLoading(true);
         setError("");
-
         const data = await apiFetch("/api/campaigns");
-
-        setCampaigns(data.campaigns);
-      } catch (error) {
-        console.error(error);
-
-        setError(
-          "No se han podido cargar las campañas."
-        );
+        if (!cancelled) {
+          setCampaigns(Array.isArray(data?.campaigns) ? data.campaigns : []);
+        }
+      } catch (err) {
+        console.error(err);
+        if (!cancelled) {
+          setCampaigns([]);
+          setError("No se han podido cargar las campañas. Inténtalo de nuevo más tarde.");
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
-    };
-
+    }
     loadCampaigns();
+    return () => { cancelled = true; };
   }, []);
 
   const filteredCampaigns = useMemo(() => {
+    const term = search.trim().toLocaleLowerCase("es-ES");
     return campaigns.filter((campaign) => {
-      const matchesSearch =
-        campaign.name
-          .toLowerCase()
-          .includes(search.toLowerCase());
-
-      if (!matchesSearch) {
-        return false;
-      }
-
-      if (filter === "ACTIVE") {
-        return campaign.status !== "COMPLETED";
-      }
-
-      if (filter === "COMPLETED") {
-        return campaign.status === "COMPLETED";
-      }
-
+      if (!(campaign.name ?? "").toLocaleLowerCase("es-ES").includes(term)) return false;
+      if (filter === "ACTIVE") return campaign.status === "ACTIVE";
+      if (filter === "COMPLETED") return campaign.status === "COMPLETED";
       return true;
     });
   }, [campaigns, search, filter]);
 
+  const formatBudget = (budget) => {
+    if (budget === null || budget === undefined || budget === "") return "Sin presupuesto";
+    const amount = Number(budget);
+    return Number.isFinite(amount)
+      ? amount.toLocaleString("es-ES", { style: "currency", currency: "EUR" })
+      : "Sin presupuesto";
+  };
+
   return (
-    <div className="mx-auto max-w-[1500px]">
-
-      {/* HEADER */}
-
+    <div className="mx-auto max-w-[1500px] text-[#3E2B1B]">
       <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
-
         <div>
-
-          <p className="text-[10px] uppercase tracking-[0.18em] text-black/40">
-            Gestión
+          <p className="text-[10px] uppercase tracking-[0.18em] text-[#A07A55]">Gestión</p>
+          <h1 className="mt-3 text-4xl font-medium tracking-[-0.05em] md:text-6xl">Campañas</h1>
+          <p className="mt-4 max-w-xl text-sm leading-relaxed text-[#6F6052]">
+            {canCreateCampaign
+              ? "Consulta y gestiona tus campañas, creadores y colaboraciones."
+              : "Consulta el estado de tus campañas y sigue sus colaboraciones."}
           </p>
-
-          <h1 className="mt-3 text-4xl font-medium tracking-[-0.05em] md:text-6xl">
-            Campañas
-          </h1>
-
-          <p className="mt-4 max-w-xl text-sm leading-relaxed text-black/50">
-            Gestiona tus campañas de influencer marketing, creadores,
-            presupuestos y colaboraciones.
-          </p>
-
         </div>
-
-        <Link
-          to="/platform/campaigns/new"
-          className="inline-flex items-center justify-center rounded-full bg-black px-6 py-4 text-[10px] font-medium uppercase tracking-[0.16em] text-white transition-transform hover:scale-[1.02]"
-        >
-          + Nueva campaña
-        </Link>
-
+        {canCreateCampaign && (
+          <Link
+            to="/platform/campaigns/new"
+            className="inline-flex items-center justify-center rounded-full bg-[#8A6340] px-6 py-4 text-[10px] font-medium uppercase tracking-[0.16em] text-white transition-colors hover:bg-[#5A3E28]"
+          >
+            + Nueva campaña
+          </Link>
+        )}
       </div>
-
-
-      {/* FILTERS */}
 
       <div className="mt-12 flex flex-col gap-3 md:flex-row">
-
-        <div className="flex-1">
-
-          <input
-            type="text"
-            value={search}
-            onChange={(event) =>
-              setSearch(event.target.value)
-            }
-            placeholder="Buscar campañas..."
-            className="w-full rounded-xl border border-black/10 bg-transparent px-5 py-4 text-sm outline-none transition-colors placeholder:text-black/30 focus:border-black/30"
-          />
-
-        </div>
-
-        <button
-          onClick={() => setFilter("ALL")}
-          className={`rounded-xl border px-5 py-4 text-[10px] uppercase tracking-[0.14em] ${
-            filter === "ALL"
-              ? "border-black bg-black text-white"
-              : "border-black/10 text-black/50 hover:border-black/30 hover:text-black"
-          }`}
-        >
-          Todas
-        </button>
-
-        <button
-          onClick={() => setFilter("ACTIVE")}
-          className={`rounded-xl border px-5 py-4 text-[10px] uppercase tracking-[0.14em] ${
-            filter === "ACTIVE"
-              ? "border-black bg-black text-white"
-              : "border-black/10 text-black/50 hover:border-black/30 hover:text-black"
-          }`}
-        >
-          Activas
-        </button>
-
-        <button
-          onClick={() => setFilter("COMPLETED")}
-          className={`rounded-xl border px-5 py-4 text-[10px] uppercase tracking-[0.14em] ${
-            filter === "COMPLETED"
-              ? "border-black bg-black text-white"
-              : "border-black/10 text-black/50 hover:border-black/30 hover:text-black"
-          }`}
-        >
-          Finalizadas
-        </button>
-
+        <input
+          type="search"
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+          placeholder="Buscar campañas..."
+          aria-label="Buscar campañas"
+          className="min-w-0 flex-1 rounded-xl border border-[#D8C3A5] bg-white px-5 py-4 text-sm outline-none placeholder:text-[#A07A55] focus:border-[#8A6340]"
+        />
+        {[
+          ["ALL", "Todas"],
+          ["ACTIVE", "Activas"],
+          ["COMPLETED", "Finalizadas"],
+        ].map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setFilter(value)}
+            aria-pressed={filter === value}
+            className={`rounded-xl border px-5 py-4 text-[10px] uppercase tracking-[0.14em] transition-colors ${
+              filter === value
+                ? "border-[#8A6340] bg-[#8A6340] text-white"
+                : "border-[#D8C3A5] bg-white text-[#6F6052] hover:border-[#8A6340]"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
-
-      {/* ERROR */}
-
       {error && (
-
-        <div className="mt-8 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-600">
+        <div role="alert" className="mt-8 rounded-xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-700">
           {error}
         </div>
-
       )}
-
-
-      {/* LOADING */}
 
       {loading && (
-
-        <div className="mt-8 rounded-2xl border border-black/10 p-12 text-center">
-
-          <p className="text-[10px] uppercase tracking-[0.16em] text-black/40">
-            Cargando campañas...
-          </p>
-
+        <div className="mt-8 rounded-2xl border border-[#D8C3A5] bg-white p-12 text-center text-sm text-[#6F6052]">
+          Cargando campañas...
         </div>
-
       )}
 
-
-      {/* EMPTY */}
-
-      {!loading &&
-        !error &&
-        filteredCampaigns.length === 0 && (
-
-          <div className="mt-8 rounded-2xl border border-black/10 p-12 text-center">
-
-            <p className="text-sm text-black/40">
-              No hay campañas que mostrar.
-            </p>
-
+      {!loading && !error && filteredCampaigns.length === 0 && (
+        <div className="mt-8 rounded-2xl border border-[#D8C3A5] bg-white p-12 text-center">
+          <p className="text-sm text-[#6F6052]">
+            {campaigns.length === 0 ? "Todavía no tienes campañas." : "No hay campañas que coincidan con los filtros."}
+          </p>
+          {canCreateCampaign && campaigns.length === 0 && (
             <Link
               to="/platform/campaigns/new"
-              className="mt-5 inline-flex rounded-full bg-black px-6 py-3 text-[9px] uppercase tracking-[0.14em] text-white"
+              className="mt-5 inline-flex rounded-full bg-[#8A6340] px-6 py-3 text-[9px] uppercase tracking-[0.14em] text-white hover:bg-[#5A3E28]"
             >
               Crear primera campaña
             </Link>
-
-          </div>
-
-        )}
-
-
-      {/* CAMPAIGNS */}
-
-      {!loading &&
-        filteredCampaigns.length > 0 && (
-
-          <div className="mt-8 overflow-hidden rounded-2xl border border-black/10">
-
-            <div className="hidden grid-cols-12 border-b border-black/10 px-6 py-4 text-[9px] uppercase tracking-[0.14em] text-black/35 md:grid">
-
-              <div className="col-span-4">
-                Campaña
-              </div>
-
-              <div className="col-span-2">
-                Creadores
-              </div>
-
-              <div className="col-span-2">
-                Presupuesto
-              </div>
-
-              <div className="col-span-2">
-                Estado
-              </div>
-
-              <div className="col-span-2">
-                Creada
-              </div>
-
-            </div>
-
-
-            {filteredCampaigns.map((campaign) => (
-
-              <Link
-                key={campaign.id}
-                to={`/platform/campaigns/${campaign.id}`}
-                className="grid gap-5 border-b border-black/10 px-6 py-7 transition-colors last:border-b-0 hover:bg-black/[0.025] md:grid-cols-12 md:items-center"
-              >
-
-                <div className="md:col-span-4">
-
-                  <p className="font-medium">
-                    {campaign.name}
-                  </p>
-
-                  <p className="mt-1 text-xs text-black/40">
-                    {campaign.category || "Sin categoría"}
-                  </p>
-
-                </div>
-
-
-                <div className="text-sm text-black/60 md:col-span-2">
-
-                  {campaign._count?.creators || 0}
-
-                  <span className="ml-1 text-black/30">
-                    creadores
-                  </span>
-
-                </div>
-
-
-                <div className="text-sm font-medium md:col-span-2">
-
-                  {Number(campaign.budget).toLocaleString(
-                    "es-ES",
-                    {
-                      style: "currency",
-                      currency: "EUR",
-                    }
-                  )}
-
-                </div>
-
-
-                <div className="md:col-span-2">
-
-                  <span className="inline-flex rounded-full border border-black/10 px-3 py-1 text-[9px] uppercase tracking-[0.12em]">
-                    {campaign.status}
-                  </span>
-
-                </div>
-
-
-                <div className="text-xs text-black/40 md:col-span-2">
-
-                  {new Date(
-                    campaign.createdAt
-                  ).toLocaleDateString("es-ES")}
-
-                </div>
-
-              </Link>
-
-            ))}
-
-          </div>
-
-        )}
-
-
-      {/* INFO */}
-
-      <div className="mt-10 rounded-2xl bg-black p-7 text-white">
-
-        <div className="max-w-2xl">
-
-          <p className="text-[9px] uppercase tracking-[0.16em] text-white/35">
-            ST.MARY AGENCY 
-          </p>
-
-          <h2 className="mt-3 text-2xl font-medium tracking-[-0.04em]">
-            Gestiona campañas de principio a fin.
-          </h2>
-
-          <p className="mt-3 text-sm leading-relaxed text-white/45">
-            Desde la búsqueda de creadores hasta los contratos, entregables,
-            pagos y resultados de campaña.
-          </p>
-
+          )}
         </div>
+      )}
 
+      {!loading && !error && filteredCampaigns.length > 0 && (
+        <div className="mt-8 overflow-hidden rounded-2xl border border-[#D8C3A5] bg-white">
+          <div className="hidden grid-cols-12 border-b border-[#EBDCC4] px-6 py-4 text-[9px] uppercase tracking-[0.14em] text-[#A07A55] md:grid">
+            <span className="col-span-4">Campaña</span>
+            <span className="col-span-2">Creadores</span>
+            <span className="col-span-2">Presupuesto</span>
+            <span className="col-span-2">Estado</span>
+            <span className="col-span-2">Creada</span>
+          </div>
+          {filteredCampaigns.map((campaign) => (
+            <Link
+              key={campaign.id}
+              to={`/platform/campaigns/${campaign.id}`}
+              className="grid gap-5 border-b border-[#EBDCC4] px-6 py-7 transition-colors last:border-b-0 hover:bg-[#F4EDE2]/60 md:grid-cols-12 md:items-center"
+            >
+              <div className="md:col-span-4">
+                <p className="font-medium">{campaign.name}</p>
+                <p className="mt-1 text-xs text-[#A07A55]">{campaign.category || "Sin categoría"}</p>
+              </div>
+              <div className="text-sm text-[#6F6052] md:col-span-2">
+                {campaign._count?.creators ?? 0} creadores
+              </div>
+              <div className="text-sm font-medium md:col-span-2">{formatBudget(campaign.budget)}</div>
+              <div className="md:col-span-2">
+                <span className="inline-flex rounded-full border border-[#D8C3A5] bg-[#F4EDE2] px-3 py-1 text-[9px] uppercase tracking-[0.12em]">
+                  {statusLabels[campaign.status] || campaign.status || "Sin estado"}
+                </span>
+              </div>
+              <div className="text-xs text-[#6F6052] md:col-span-2">
+                {campaign.createdAt && !Number.isNaN(new Date(campaign.createdAt).getTime())
+                  ? new Date(campaign.createdAt).toLocaleDateString("es-ES")
+                  : "—"}
+              </div>
+            </Link>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-10 rounded-2xl border border-[#D8C3A5] bg-[#EBDCC4] p-7">
+        <p className="text-[9px] uppercase tracking-[0.16em] text-[#8A6340]">ST.MARY AGENCY</p>
+        <h2 className="mt-3 text-2xl font-medium tracking-[-0.04em]">
+          {canCreateCampaign ? "Tus campañas, en un solo lugar." : "Sigue la evolución de tus campañas."}
+        </h2>
+        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#6F6052]">
+          Consulta las colaboraciones y accede al detalle de cada campaña para conocer su estado.
+        </p>
       </div>
-
     </div>
   );
 }

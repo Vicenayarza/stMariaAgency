@@ -96,11 +96,15 @@ function Proposals() {
 
       <div className="grid gap-5 xl:grid-cols-2">
         {campaigns.map((campaign) => {
+          const stats = {
+            pending: campaign.stats?.pending ?? 0,
+            approved: campaign.stats?.approved ?? 0,
+            rejected: campaign.stats?.rejected ?? 0,
+            available: campaign.stats?.available ?? 0,
+          };
           const complete =
-            campaign.targetCreatorCount !=
-              null &&
-            campaign.stats.available === 0;
-
+            campaign.targetCreatorCount != null &&
+            stats.approved >= campaign.targetCreatorCount;
           return (
             <Link
               key={campaign.id}
@@ -132,7 +136,7 @@ function Proposals() {
                   </span>
                 ) : (
                   <span className="rounded-full bg-black/5 px-3 py-1.5 text-[8px] uppercase tracking-[0.12em] text-black/50">
-                    {campaign.stats.pending}{" "}
+                    {stats.pending}{" "}
                     pendientes
                   </span>
                 )}
@@ -151,15 +155,15 @@ function Proposals() {
                   label="Seleccionados"
                   value={
                     campaign.targetCreatorCount
-                      ? `${campaign.stats.approved} / ${campaign.targetCreatorCount}`
-                      : campaign.stats.approved
+                      ? `${stats.approved} / ${campaign.targetCreatorCount}`
+                      : stats.approved
                   }
                 />
 
                 <Stat
                   label="Disponibles"
                   value={
-                    campaign.stats.available ??
+                    stats.available ??
                     "—"
                   }
                 />
@@ -167,7 +171,7 @@ function Proposals() {
 
               <div className="mt-6 flex items-center justify-between">
                 <p className="text-xs text-black/35">
-                  {campaign.stats.rejected}{" "}
+                  {stats.rejected}{" "}
                   rechazados
                 </p>
 

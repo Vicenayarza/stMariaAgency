@@ -1,151 +1,205 @@
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+
+import { useState } from "react";
+import {
+  Link,
+  NavLink,
+  Outlet,
+  useNavigate,
+} from "react-router-dom";
+
 import { useAuth } from "../context/AuthContext";
+import NotificationBell from "./NotificationBell";
 
 const navigation = [
-  {
-    label: "Resumen",
-    path: "/admin",
-  },
-  {
-    label: "Clientes",
-    path: "/admin/brands",
-  },
-  {
-    label: "Creadores",
-    path: "/admin/creators",
-  },
-  {
-    label: "Campañas",
-    path: "/admin/campaigns",
-  },
-  {
-    label: "Finanzas",
-    path: "/admin/finance",
-  },
+  { label: "Resumen", path: "/admin" },
+  { label: "Clientes", path: "/admin/brands" },
+  { label: "Creadores", path: "/admin/creators" },
+  { label: "Campañas", path: "/admin/campaigns" },
+  { label: "Finanzas", path: "/admin/finance" },
+  { label: "Solicitudes Marcas", path: "/admin/brand-requests" },
+  { label: "Solicitudes Creadores", path: "/admin/creator-requests" },
 ];
-
 function AdminDashboardLayout() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
       await logout();
     } finally {
-      navigate("/login", {
-        replace: true,
-      });
+      setMobileMenuOpen(false);
+      navigate("/login", { replace: true });
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#f5f5f2] text-[#111111]">
+  const navLinkClass = ({ isActive }) =>
+    `block rounded-xl px-4 py-3 text-sm font-medium transition-colors ${
+      isActive
+        ? "bg-[#F4EDE2] text-[#5A3E28]"
+        : "text-[#EBDCC4] hover:bg-[#8A6340] hover:text-white"
+    }`;
 
-      <aside className="fixed left-0 top-0 hidden h-screen w-64 border-r border-black/10 bg-[#111111] text-white md:block">
+  const renderNavigation = () => (
+    <>
+      <nav
+        aria-label="Administración"
+        className="flex-1 px-4 py-6"
+      >
+        <p className="px-3 pb-3 text-[9px] uppercase tracking-[0.16em] text-[#D8C3A5]">
+          Administración
+        </p>
 
-        <div className="flex h-full flex-col">
-
-          <div className="border-b border-white/10 px-7 py-6">
-
-            <Link
-              to="/admin"
-              className="text-xl font-semibold tracking-[-0.05em]"
+        <div className="space-y-1">
+          {navigation.map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.path === "/admin"}
+              onClick={() => setMobileMenuOpen(false)}
+              className={navLinkClass}
             >
-              ST.MARY AGENCY 
-            </Link>
-
-            <p className="mt-2 text-[9px] uppercase tracking-[0.16em] text-white/35">
-              Backoffice
-            </p>
-
-          </div>
-
-          <div className="border-b border-white/10 px-7 py-5">
-
-            <p className="text-sm font-medium">
-              {user?.name || "ST.MARY AGENCY "}
-            </p>
-
-            <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-white/35">
-              Staff
-            </p>
-
-          </div>
-
-          <nav className="flex-1 px-4 py-6">
-
-            <p className="px-3 pb-3 text-[9px] uppercase tracking-[0.16em] text-white/25">
-              Administración
-            </p>
-
-            <div className="space-y-1">
-
-              {navigation.map((item) => (
-
-                <NavLink
-                  key={item.path}
-                  to={item.path}
-                  end={item.path === "/admin"}
-                  className={({ isActive }) =>
-                    `block rounded-xl px-4 py-3 text-sm transition-colors ${
-                      isActive
-                        ? "bg-white text-black"
-                        : "text-white/55 hover:bg-white/5 hover:text-white"
-                    }`
-                  }
-                >
-                  {item.label}
-                </NavLink>
-
-              ))}
-
-            </div>
-
-          </nav>
-
-          <div className="border-t border-white/10 p-4">
-
-            <button
-              onClick={handleLogout}
-              className="w-full rounded-xl px-4 py-3 text-left text-[10px] uppercase tracking-[0.14em] text-white/40 hover:bg-white/5 hover:text-white"
-            >
-              Cerrar sesión
-            </button>
-
-          </div>
-
+              {item.label}
+            </NavLink>
+          ))}
         </div>
+      </nav>
 
+
+      <div className="border-t border-[#A07A55]/40 p-4">
+            <NavLink
+  to="/admin/settings"
+  onClick={() => setMobileMenuOpen(false)}
+  className={navLinkClass}
+>
+  Ajustes
+</NavLink>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="w-full rounded-xl px-4 py-3 text-left text-[10px] font-medium uppercase tracking-[0.14em] text-[#EBDCC4] transition-colors hover:bg-[#8A6340] hover:text-white"
+        >
+          Cerrar sesión
+        </button>
+      </div>
+    </>
+  );
+
+  const renderSidebarContent = () => (
+    <div className="flex h-full flex-col">
+      <div className="border-b border-[#A07A55]/40 px-7 py-6">
+        <Link
+          to="/admin"
+          onClick={() => setMobileMenuOpen(false)}
+          className="text-xl font-semibold tracking-[-0.05em] text-[#F4EDE2]"
+        >
+          ST.MARY AGENCY
+        </Link>
+
+        <p className="mt-2 text-[9px] uppercase tracking-[0.16em] text-[#D8C3A5]">
+          Backoffice
+        </p>
+      </div>
+
+      <div className="border-b border-[#A07A55]/40 px-7 py-5">
+        <p className="truncate text-sm font-medium text-[#F4EDE2]">
+          {user?.name || "ST.MARY AGENCY"}
+        </p>
+
+        <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-[#D8C3A5]">
+          Staff
+        </p>
+      </div>
+
+      {renderNavigation()}
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#F4EDE2] font-sans text-[#3E2B1B]">
+      {/* SIDEBAR DESKTOP */}
+      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-64 border-r border-[#8A6340]/30 bg-[#5A3E28] md:block">
+        {renderSidebarContent()}
       </aside>
 
-      <main className="md:ml-64">
+      {/* SIDEBAR MÓVIL */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <button
+            type="button"
+            aria-label="Cerrar menú"
+            className="absolute inset-0 bg-[#3E2B1B]/50"
+            onClick={() => setMobileMenuOpen(false)}
+          />
 
-        <header className="flex h-20 items-center justify-between border-b border-black/10 bg-[#f5f5f2] px-6 md:px-10">
+          <aside
+            aria-label="Menú de administración"
+            className="relative flex h-full w-72 max-w-[85vw] flex-col bg-[#5A3E28] shadow-2xl"
+          >
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              {renderSidebarContent()}
+            </div>
 
-          <div>
+            <button
+              type="button"
+              onClick={() => setMobileMenuOpen(false)}
+              className="absolute right-3 top-4 rounded-lg px-3 py-2 text-sm text-[#F4EDE2] hover:bg-[#8A6340]"
+              aria-label="Cerrar navegación"
+            >
+              ✕
+            </button>
+          </aside>
+        </div>
+      )}
 
-            <p className="text-[9px] uppercase tracking-[0.16em] text-black/35">
-              ST.MARY AGENCY 
-            </p>
+      {/* CONTENIDO PRINCIPAL */}
+      <main className="min-w-0 md:ml-64">
+        <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-[#D8C3A5]/70 bg-[#F4EDE2]/95 px-5 backdrop-blur-xl md:px-10">
+          <div className="flex items-center gap-4">
+            <button
+              type="button"
+              aria-label="Abrir menú"
+              aria-expanded={mobileMenuOpen}
+              onClick={() => setMobileMenuOpen(true)}
+              className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#D8C3A5] text-[#5A3E28] hover:bg-[#EBDCC4] md:hidden"
+            >
+              <span className="text-xl leading-none">☰</span>
+            </button>
 
-            <p className="mt-1 text-sm font-medium">
-              Backoffice
-            </p>
+            <div>
+              <p className="text-[9px] font-medium uppercase tracking-[0.16em] text-[#8A6340]">
+                ST.MARY AGENCY
+              </p>
 
+              <p className="mt-1 text-sm font-medium text-[#3E2B1B]">
+                Backoffice
+              </p>
+            </div>
           </div>
 
-          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-black text-[10px] text-white">
-            SM
-          </div>
+          <div className="flex items-center gap-4">
+            <NotificationBell />
 
+            <div
+              title={user?.name || "Staff"}
+              className="flex h-9 w-9 items-center justify-center rounded-full bg-[#8A6340] text-[10px] font-semibold text-white"
+            >
+              {String(user?.name || "SM")
+                .trim()
+                .split(/\s+/)
+                .slice(0, 2)
+                .map((part) => part.charAt(0))
+                .join("")
+                .toUpperCase()}
+            </div>
+          </div>
         </header>
 
-        <div className="px-6 py-8 md:px-10 md:py-10">
+        <div className="px-5 py-8 md:px-10 md:py-10">
           <Outlet />
         </div>
-
       </main>
-
     </div>
   );
 }

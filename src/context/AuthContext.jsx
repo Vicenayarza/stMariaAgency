@@ -10,35 +10,31 @@ import { apiFetch } from "../lib/api";
 
 const AuthContext = createContext(null);
 
-/*
- * Permisos disponibles para una marca.
- *
- * Esto nos permite usar:
- *
- * can("canEditCampaigns")
- * can("canSelectCreators")
- * can("canViewResults")
- *
- * desde cualquier página.
- */
 const EMPTY_PERMISSIONS = {
   canViewCampaigns: false,
   canCreateCampaigns: false,
   canEditCampaigns: false,
-
   canViewProposals: false,
   canApproveCreators: false,
-
   canViewDeliverables: false,
   canApproveContent: false,
-
   canViewResults: false,
   canExportReports: false,
-
   canDiscoverCreators: false,
   canContactCreators: false,
   canSelectCreators: false,
 };
+
+// Acciones reservadas a marcas que gestionan directamente sus campañas.
+// La aprobación de propuestas NO se restringe aquí: también puede
+// corresponder a una marca gestionada por la agencia.
+const SELF_MANAGED_ONLY = new Set([
+  "canCreateCampaigns",
+  "canEditCampaigns",
+  "canDiscoverCreators",
+  "canContactCreators",
+  "canSelectCreators",
+]);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -47,8 +43,7 @@ export function AuthProvider({ children }) {
   const loadUser = async () => {
     try {
       const data = await apiFetch("/api/auth/me");
-
-      setUser(data.user);
+      setUser(data.user ?? null);
     } catch {
       setUser(null);
     } finally {
@@ -63,25 +58,14 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const data = await apiFetch("/api/auth/login", {
       method: "POST",
-      body: JSON.stringify({
-        email,
-        password,
-      }),
+      body: JSON.stringify({ email, password }),
     });
 
-    /*
-     * /login devuelve información básica.
-     *
-     * Después pedimos /me para recuperar también
-     * memberships y permisos.
-     */
-    setUser(data.user);
+    setUser(data.user ?? null);
 
     try {
       const me = await apiFetch("/api/auth/me");
-
-      setUser(me.user);
-
+      setUser(me.user ?? null);
       return me.user;
     } catch {
       return data.user;
@@ -90,82 +74,47 @@ export function AuthProvider({ children }) {
 
   const logout = async () => {
     try {
-      await apiFetch("/api/auth/logout", {
-        method: "POST",
-      });
+      await apiFetch("/api/auth/logout", { method: "POST" });
     } finally {
       setUser(null);
     }
   };
 
-  /*
-   * Por ahora una cuenta BRAND trabaja con
-   * una marca principal.
-   *
-   * La arquitectura permite tener varias
-   * memberships en el futuro.
-   */
   const membership = useMemo(() => {
-    if (
-      user?.role !== "BRAND" ||
-      !Array.isArray(user?.brandMemberships)
-    ) {
+    if (user?.role !== "BRAND" || !Array.isArray(user.brandMemberships)) {
       return null;
     }
-
     return user.brandMemberships[0] ?? null;
   }, [user]);
 
-  /*
-   * Objeto de permisos normalizado.
-   */
+  const accessMode = membership?.brand?.accessMode;
+
   const permissions = useMemo(() => {
-    /*
-     * STAFF tiene acceso completo.
-     *
-     * Aunque actualmente STAFF utiliza /admin,
-     * dejamos el helper preparado.
-     */
     if (user?.role === "STAFF") {
       return Object.fromEntries(
-        Object.keys(EMPTY_PERMISSIONS).map(
-          (permission) => [permission, true]
-        )
+        Object.keys(EMPTY_PERMISSIONS).map((permission) => [permission, true])
       );
     }
 
-    if (
-      user?.role !== "BRAND" ||
-      !membership
-    ) {
+    if (user?.role !== "BRAND" || !membership) {
       return EMPTY_PERMISSIONS;
     }
 
     return Object.fromEntries(
-      Object.keys(EMPTY_PERMISSIONS).map(
-        (permission) => [
-          permission,
-          Boolean(membership[permission]),
-        ]
-      )
+      Object.keys(EMPTY_PERMISSIONS).map((permission) => {
+        const granted = membership[permission] === true;
+        const allowedByMode =
+          !SELF_MANAGED_ONLY.has(permission) || accessMode === "SELF_MANAGED";
+        return [permission, granted && allowedByMode];
+      })
     );
-  }, [user, membership]);
+  }, [user, membership, accessMode]);
 
-  /*
-   * Helper principal.
-   *
-   * Ejemplo:
-   *
-   * if (can("canEditCampaigns")) { ... }
-   */
   const can = (permission) => {
-    if (user?.role === "STAFF") {
-      return true;
+    if (!Object.prototype.hasOwnProperty.call(EMPTY_PERMISSIONS, permission)) {
+      return false;
     }
-
-    return Boolean(
-      permissions?.[permission]
-    );
+    return permissions[permission] === true;
   };
 
   return (
@@ -173,12 +122,9 @@ export function AuthProvider({ children }) {
       value={{
         user,
         loading,
-
         login,
         logout,
-
         refreshUser: loadUser,
-
         membership,
         permissions,
         can,
@@ -191,12 +137,8 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-
   if (!context) {
-    throw new Error(
-      "useAuth debe utilizarse dentro de AuthProvider."
-    );
+    throw new Error("useAuth debe utilizarse dentro de AuthProvider.");
   }
-
   return context;
 }

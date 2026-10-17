@@ -54,7 +54,7 @@ function BrandDashboard() {
           </p>
 
           <h1 className="mt-3 text-4xl font-medium tracking-[-0.05em] md:text-6xl">
-            Buenos días.
+            Bienvenido
           </h1>
 
           <p className="mt-4 max-w-xl text-sm leading-relaxed text-black/50">

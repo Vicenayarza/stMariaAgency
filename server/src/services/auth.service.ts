@@ -270,30 +270,41 @@ export async function getUserFromSession(
 ) {
   const tokenHash = hashSessionToken(rawToken);
 
-  const session = await prisma.session.findUnique({
-    where: {
-      tokenHash,
-    },
+ 
+const session = await prisma.session.findUnique({
+  where: {
+    tokenHash,
+  },
 
-    include: {
-      user: {
-        include: {
-          brandMemberships: {
-            include: {
-              brand: true,
-            },
+  include: {
+    user: {
+      include: {
+        brandMemberships: {
+          include: {
+            brand: true,
           },
-
-          creator: true,
-          staff: true,
         },
+        creator: true,
+        staff: true,
       },
+    },
+  },
+});
+
+
+  if (!session) {
+  return null;
+}
+
+if (session.user.status !== "ACTIVE") {
+  await prisma.session.deleteMany({
+    where: {
+      userId: session.user.id,
     },
   });
 
-  if (!session) {
-    return null;
-  }
+  return null;
+}
 
   // Eliminar automáticamente sesiones caducadas
   if (session.expiresAt <= new Date()) {

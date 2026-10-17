@@ -13,6 +13,12 @@ enum UserRole {
   STAFF
 }
 
+enum CreatorRegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 enum StaffRole {
   ADMIN
   MANAGER
@@ -136,6 +142,23 @@ enum CollaborationType {
   PAID_AND_PRODUCT
 }
 
+enum NotificationType {
+  CAMPAIGN
+  COLLABORATION
+  APPLICATION
+  DELIVERABLE
+  REVIEW
+  PAYMENT
+  CREATOR
+  SYSTEM
+}
+
+enum BrandRegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 model User {
   id           String     @id @default(uuid())
   email        String     @unique
@@ -143,10 +166,12 @@ model User {
   name         String
   role         UserRole
   status       UserStatus @default(ACTIVE)
+  avatarUrl    String?
 
   brandMemberships BrandMember[]
   creator          Creator?
   staff            StaffMember?
+  settings UserSettings?
 
   sessions Session[]
 
@@ -156,7 +181,14 @@ model User {
 
   verifiedCreatorMetrics CreatorMetric[]
 
+  verifiedDeliverableMetrics DeliverableMetric[] @relation("DeliverableMetricVerifier")
+
   creatorLists CreatorList[]
+
+  activationTokens AccountActivationToken[]
+
+  // NOTIFICACIONES
+  notifications Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -219,6 +251,43 @@ model BrandMember {
   @@unique([brandId, userId])
   @@index([brandId])
   @@index([userId])
+}
+
+model BrandRegistrationRequest {
+  id String @id @default(uuid())
+
+  // Persona de contacto
+  name     String
+  lastName String?
+  email    String
+  country  String?
+
+  // Empresa
+  companyName     String
+  website         String?
+  phone           String?
+  employeeCount   String?
+  services        String?
+  needs           String?
+  discoverySource String?
+  industry        String?
+
+  // Revisión por STAFF
+  status BrandRegistrationStatus @default(PENDING)
+
+  reviewedById String?
+  reviewedAt   DateTime?
+  reviewNotes  String?
+
+  // Vinculación con la marca creada al aprobar
+  brandId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([email])
+  @@index([createdAt])
 }
 
 model Creator {
@@ -310,7 +379,6 @@ model Campaign {
   instructions CampaignInstruction[]
 
   matches CreatorMatch[]
-  
 
   creatorLists CreatorList[]
 
@@ -372,6 +440,7 @@ model CampaignCreator {
   contactedAt       DateTime?
   acceptedAt        DateTime?
   selectedAt        DateTime?
+  selectionSource   String?
   productSentAt     DateTime?
   contentReceivedAt DateTime?
   publishedAt       DateTime?
@@ -399,9 +468,9 @@ model CampaignOpportunityDismissal {
 
   dismissedAt DateTime @default(now())
 
-  campaign Campaign @relation(fields: [campaignId],references: [id],onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
-  creator Creator @relation(fields: [creatorId],references: [id],onDelete: Cascade)
+  creator Creator @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@unique([campaignId, creatorId])
   @@index([campaignId])
@@ -711,6 +780,47 @@ model CreatorMatch {
   @@index([calculatedAt])
 }
 
+model CreatorRegistrationRequest {
+  id String @id @default(uuid())
+
+  // Datos personales
+  name     String
+  lastName String
+  username String
+  email    String
+  country  String
+
+  // Redes sociales declaradas
+  instagram String?
+  tiktok    String?
+  youtube   String?
+
+  // Invitación
+  invitationCode String?
+
+  // Consentimiento
+  privacyAccepted   Boolean   @default(false)
+  privacyAcceptedAt DateTime?
+
+  // Revisión de STAFF
+  status CreatorRegistrationStatus @default(PENDING)
+
+  reviewedById String?
+  reviewedAt   DateTime?
+  reviewNotes  String?
+
+  // Creador generado después de aprobar
+  creatorId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([email])
+  @@index([username])
+  @@index([createdAt])
+}
+
 model CampaignProposal {
   id String @id @default(uuid())
 
@@ -867,6 +977,8 @@ model Deliverable {
   submittedAt DateTime?
   approvedAt  DateTime?
 
+  publicationVerifiedAt DateTime?
+
   contentUrl String?
   notes      String?
 
@@ -875,9 +987,13 @@ model Deliverable {
   campaignCreator CampaignCreator @relation(fields: [campaignCreatorId], references: [id], onDelete: Cascade)
 
   reviews DeliverableReview[]
+  metrics DeliverableMetric[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  publishedUrl String?
+  publishedAt  DateTime?
 
   @@index([campaignCreatorId])
   @@index([status])
@@ -904,6 +1020,41 @@ model DeliverableReview {
   @@index([deliverableId])
   @@index([createdById])
   @@index([createdAt])
+}
+
+model DeliverableMetric {
+  id String @id @default(uuid())
+
+  deliverableId String
+
+  // Métricas de la publicación
+  reach       Int?
+  impressions Int?
+  views       Int?
+  likes       Int?
+  comments    Int?
+  shares      Int?
+  saves       Int?
+
+  // Origen y validación
+  source             MetricSource             @default(CREATOR)
+  verificationStatus MetricVerificationStatus @default(UNVERIFIED)
+  verifiedById       String?
+  verifiedAt         DateTime?
+
+  // Momento al que corresponden las estadísticas
+  recordedAt DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  deliverable Deliverable @relation(fields: [deliverableId], references: [id], onDelete: Cascade)
+
+  verifiedBy User? @relation("DeliverableMetricVerifier", fields: [verifiedById], references: [id], onDelete: SetNull)
+
+  @@index([deliverableId, recordedAt])
+  @@index([verificationStatus])
+  @@index([verifiedById])
 }
 
 model CreatorSocialAccount {
@@ -966,4 +1117,99 @@ model CreatorMetric {
   @@index([recordedAt])
   @@index([verificationStatus])
   @@index([verifiedById])
+}
+
+model Notification {
+  id String @id @default(uuid())
+
+  userId String
+
+  type NotificationType
+
+  title   String
+  message String
+
+  link String?
+
+  dismissedAt DateTime?
+
+  read Boolean @default(false)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([read])
+  @@index([createdAt])
+  @@index([userId, read])
+}
+
+model AccountActivationToken {
+  id String @id @default(uuid())
+
+  userId String
+
+  tokenHash String @unique
+
+  expiresAt DateTime
+
+  usedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+model UserSettings {
+  id                     String   @id @default(uuid())
+  userId                 String   @unique
+
+  theme                  String   @default("SYSTEM")
+
+  emailNotifications     Boolean  @default(true)
+  campaignNotifications  Boolean  @default(true)
+
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NotificationDelivery {
+  id        String   @id @default(cuid())
+
+  // Identificador único del evento
+  eventKey  String   @unique
+
+  // Usuario destinatario
+  userId    String
+  
+  emailTo      String?
+  emailSubject String?
+  emailHtml    String? @db.Text
+  emailText    String? @db.Text
+
+  // Información del evento
+  type      String
+  title     String
+  message   String
+  link      String?
+
+  // Estado de cada canal
+  internalStatus String @default("PENDING")
+  emailStatus    String @default("PENDING")
+
+  // Información para futuros reintentos
+  emailAttempts Int      @default(0)
+  lastError     String?
+  processedAt   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([emailStatus, createdAt])
 }

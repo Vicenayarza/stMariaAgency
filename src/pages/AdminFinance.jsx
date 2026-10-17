@@ -101,7 +101,7 @@ function AdminFinance() {
   if (loading) {
     return (
       <div className="py-20 text-center">
-        <p className="text-sm text-black/40">
+        <p className="text-sm text-[#6F6052]">
           Cargando información financiera...
         </p>
       </div>
@@ -111,7 +111,7 @@ function AdminFinance() {
   if (error) {
     return (
       <div>
-        <p className="text-[10px] uppercase tracking-[0.18em] text-black/35">
+        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A6340]">
           Administración
         </p>
 
@@ -129,7 +129,7 @@ function AdminFinance() {
   return (
     <div>
       <div className="mb-10">
-        <p className="text-[10px] uppercase tracking-[0.18em] text-black/35">
+        <p className="text-[10px] uppercase tracking-[0.18em] text-[#8A6340]">
           Administración
         </p>
 
@@ -137,7 +137,7 @@ function AdminFinance() {
           Finanzas
         </h1>
 
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-black/45">
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-[#6F6052]">
           Control operativo de presupuestos, fees de creadores y
           margen estimado de las campañas gestionadas por
           ST.MARY AGENCY.
@@ -145,115 +145,121 @@ function AdminFinance() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
-        <div className="rounded-2xl border border-black/10 bg-white p-5">
-          <p className="text-[9px] uppercase tracking-[0.15em] text-black/35">
+        <div className="rounded-2xl border border-[#D8C3A5]/70 bg-white p-5">
+          <p className="text-[9px] uppercase tracking-[0.15em] text-[#8A6340]">
             Presupuesto gestionado
           </p>
 
-          <p className="mt-3 text-2xl font-medium">
+          <p className="mt-3 text-2xl font-medium text-[#3E2B1B]">
             {formatCurrency(finance?.totalCampaignBudget)}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-black/10 bg-white p-5">
-          <p className="text-[9px] uppercase tracking-[0.15em] text-black/35">
+        <div className="rounded-2xl border border-[#D8C3A5]/70 bg-white p-5">
+
+          <p className="text-[9px] uppercase tracking-[0.15em] text-[#8A6340]">
             Fees de creadores
           </p>
 
-          <p className="mt-3 text-2xl font-medium">
+          <p className="mt-3 text-2xl font-medium text-[#3E2B1B]">
             {formatCurrency(finance?.totalCreatorFees)}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-black/10 bg-white p-5">
-          <p className="text-[9px] uppercase tracking-[0.15em] text-black/35">
+        <div className="rounded-2xl border border-[#D8C3A5]/70 bg-white p-5">
+
+          <p className="text-[9px] uppercase tracking-[0.15em] text-[#8A6340]">
             Pagado
           </p>
 
-          <p className="mt-3 text-2xl font-medium">
+          <p className="mt-3 text-2xl font-medium text-[#3E2B1B]">
             {formatCurrency(finance?.paidCreatorFees)}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-black/10 bg-white p-5">
-          <p className="text-[9px] uppercase tracking-[0.15em] text-black/35">
+        <div className="rounded-2xl border border-[#D8C3A5]/70 bg-white p-5">
+
+          <p className="text-[9px] uppercase tracking-[0.15em] text-[#8A6340]">
             Pendiente
           </p>
 
-          <p className="mt-3 text-2xl font-medium">
+          <p className="mt-3 text-2xl font-medium text-[#3E2B1B]">
             {formatCurrency(finance?.pendingCreatorFees)}
           </p>
         </div>
 
-        <div className="rounded-2xl border border-black/10 bg-black p-5 text-white">
-          <p className="text-[9px] uppercase tracking-[0.15em] text-white/45">
+       <div className="rounded-2xl border border-[#D8C3A5]/70 bg-[#5A3E28] p-5 text-white">
+
+          <p className="text-[9px] uppercase tracking-[0.15em] text-[#EBDCC4]">
+
             Margen bruto estimado
           </p>
 
-          <p className="mt-3 text-2xl font-medium">
+          <p className="mt-3 text-2xl font-medium text-[#3E2B1B]">
             {formatCurrency(finance?.estimatedGrossMargin)}
           </p>
         </div>
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-2xl border border-black/10 bg-white">
-        <div className="flex flex-col justify-between gap-3 border-b border-black/10 px-6 py-5 md:flex-row md:items-center">
+      <div className="mt-8 overflow-hidden rounded-2xl border border-[#D8C3A5]/70 bg-white">
+
+        <div className="flex flex-col justify-between gap-3 border-b border-[#D8C3A5]/70 px-6 py-5 md:flex-row md:items-center">
           <div>
-            <p className="text-[10px] uppercase tracking-[0.16em] text-black/35">
+            <p className="text-[10px] uppercase tracking-[0.16em] text-[#8A6340]">
               Rentabilidad por campaña
             </p>
 
-            <p className="mt-1 text-xs text-black/35">
+            <p className="mt-1 text-xs text-[#8A6340]">
               Vista operativa. No representa todavía contabilidad
               fiscal.
             </p>
           </div>
 
-          <span className="rounded-full bg-black/5 px-3 py-1 text-[9px] uppercase tracking-[0.1em] text-black/45">
+          <span className="rounded-full bg-[#EBDCC4] px-3 py-1 text-[9px] uppercase tracking-[0.1em] text-[#6F6052]">
             {campaignData.length} campañas
           </span>
         </div>
 
         {campaignData.length === 0 ? (
           <div className="px-6 py-16 text-center">
-            <p className="text-sm text-black/40">
+            <p className="text-sm text-[#6F6052]">
               Todavía no hay campañas.
             </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[950px]">
-              <thead>
-                <tr className="border-b border-black/10 text-left">
-                  <th className="px-6 py-4 text-[9px] font-medium uppercase tracking-[0.14em] text-black/35">
+              <thead className="bg-[#F4EDE2]/70">
+                <tr className="border-b border-[#D8C3A5]/70 text-left">
+                  <th className="px-6 py-4 text-[9px] font-medium uppercase tracking-[0.14em] text-[#8A6340]">
                     Campaña
                   </th>
 
-                  <th className="px-6 py-4 text-[9px] font-medium uppercase tracking-[0.14em] text-black/35">
+                  <th className="px-6 py-4 text-[9px] font-medium uppercase tracking-[0.14em] text-[#8A6340]">
                     Cliente
                   </th>
 
-                  <th className="px-6 py-4 text-right text-[9px] font-medium uppercase tracking-[0.14em] text-black/35">
+                  <th className="px-6 py-4 text-[9px] font-medium uppercase tracking-[0.14em] text-[#8A6340]">
                     Presupuesto
                   </th>
 
-                  <th className="px-6 py-4 text-right text-[9px] font-medium uppercase tracking-[0.14em] text-black/35">
+                  <th className="px-6 py-4 text-[9px] font-medium uppercase tracking-[0.14em] text-[#8A6340]">
                     Fees
                   </th>
 
-                  <th className="px-6 py-4 text-right text-[9px] font-medium uppercase tracking-[0.14em] text-black/35">
+                  <th className="px-6 py-4 text-[9px] font-medium uppercase tracking-[0.14em] text-[#8A6340]">
                     Pagado
                   </th>
 
-                  <th className="px-6 py-4 text-right text-[9px] font-medium uppercase tracking-[0.14em] text-black/35">
+                  <th className="px-6 py-4 text-[9px] font-medium uppercase tracking-[0.14em] text-[#8A6340]">
                     Pendiente
                   </th>
 
-                  <th className="px-6 py-4 text-right text-[9px] font-medium uppercase tracking-[0.14em] text-black/35">
+                  <th className="px-6 py-4 text-[9px] font-medium uppercase tracking-[0.14em] text-[#8A6340]">
                     Margen
                   </th>
 
-                  <th className="px-6 py-4 text-right text-[9px] font-medium uppercase tracking-[0.14em] text-black/35">
+                  <th className="px-6 py-4 text-[9px] font-medium uppercase tracking-[0.14em] text-[#8A6340]">
                     Acción
                   </th>
                 </tr>
@@ -263,21 +269,21 @@ function AdminFinance() {
                 {campaignData.map((campaign) => (
                   <tr
                     key={campaign.id}
-                    className="border-b border-black/5 last:border-b-0"
+                    className="border-b border-[#D8C3A5]/50 transition-colors hover:bg-[#F4EDE2]/45 last:border-b-0"
                   >
                     <td className="px-6 py-5">
                       <p className="text-sm font-medium">
                         {campaign.name}
                       </p>
 
-                      <p className="mt-1 text-xs text-black/35">
+                      <p className="mt-1 text-xs text-[#8A6340]">
                         {getStatusLabel(campaign.status)} ·{" "}
                         {formatDate(campaign.createdAt)}
                       </p>
                     </td>
 
                     <td className="px-6 py-5">
-                      <span className="text-sm text-black/60">
+                      <span className="text-sm text-[#6F6052]">
                         {campaign.brand?.companyName || "—"}
                       </span>
                     </td>
@@ -315,7 +321,7 @@ function AdminFinance() {
                     <td className="px-6 py-5 text-right">
                       <Link
                         to={`/admin/campaigns/${campaign.id}`}
-                        className="inline-flex rounded-xl border border-black/10 px-4 py-2 text-[10px] uppercase tracking-[0.12em] transition-colors hover:bg-black hover:text-white"
+                       className="inline-flex rounded-xl border border-[#D8C3A5]/70 px-4 py-2 text-[10px] uppercase tracking-[0.12em] text-[#5A3E28] transition-colors hover:border-[#8A6340] hover:bg-[#8A6340] hover:text-white"
                       >
                         Ver
                       </Link>
@@ -328,12 +334,13 @@ function AdminFinance() {
         )}
       </div>
 
-      <div className="mt-6 rounded-2xl border border-black/10 bg-black/[0.02] px-6 py-5">
-        <p className="text-[9px] uppercase tracking-[0.15em] text-black/35">
+     <div className="mt-6 rounded-2xl border border-[#D8C3A5]/70 bg-[#EBDCC4]/40 px-6 py-5">
+
+        <p className="text-[9px] uppercase tracking-[0.15em] text-[#8A6340]">
           Importante
         </p>
 
-        <p className="mt-2 max-w-4xl text-xs leading-6 text-black/45">
+        <p className="mt-2 max-w-4xl text-xs leading-6 text-[#6F6052]">
           Estos datos representan el control financiero operativo
           interno de ST.MARY AGENCY . El sistema de facturación, cobros de
           clientes, pagos a creadores, Stripe, impuestos y

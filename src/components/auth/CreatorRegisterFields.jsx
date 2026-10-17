@@ -64,35 +64,62 @@ function CreatorRegisterFields({
         />
       </div>
 
-      <div className="mt-5 grid gap-5 sm:grid-cols-2">
-        <Field
-          label="Contraseña"
-          name="password"
-          type="password"
-          value={form.password}
-          onChange={handleChange}
-          placeholder="Mínimo 8 caracteres"
-          autoComplete="new-password"
-          minLength={8}
-          required
-          inputClass={inputClass}
-          labelClass={labelClass}
-        />
+      
+<div className="mt-6">
+  <p className={labelClass}>
+    Redes sociales *
+  </p>
 
-        <Field
-          label="Repetir contraseña"
-          name="confirmPassword"
-          type="password"
-          value={form.confirmPassword}
-          onChange={handleChange}
-          placeholder="Repite tu contraseña"
-          autoComplete="new-password"
-          minLength={8}
-          required
-          inputClass={inputClass}
-          labelClass={labelClass}
-        />
-      </div>
+  <p className="mt-2 text-xs leading-5 text-[#6F6052]">
+    Introduce al menos una red social para que
+    nuestro equipo pueda revisar tu perfil.
+    Puedes escribir tu usuario o el enlace
+    completo a tu cuenta.
+  </p>
+
+  <div className="mt-4 space-y-4">
+    <Field
+      label="Instagram"
+      name="instagram"
+      value={form.instagram || ""}
+      onChange={handleChange}
+      placeholder="tuusuariosin@"
+      inputClass={inputClass}
+      labelClass={labelClass}
+    />
+
+    <Field
+      label="TikTok"
+      name="tiktok"
+      value={form.tiktok || ""}
+      onChange={handleChange}
+      placeholder="tuusuariosin@"
+      inputClass={inputClass}
+      labelClass={labelClass}
+    />
+
+    <Field
+      label="YouTube"
+      name="youtube"
+      value={form.youtube || ""}
+      onChange={handleChange}
+      placeholder="Usuario o URL del canal"
+      inputClass={inputClass}
+      labelClass={labelClass}
+    />
+  </div>
+
+  {![
+    form.instagram,
+    form.tiktok,
+    form.youtube,
+  ].some((value) => value?.trim()) && (
+    <p className="mt-3 text-xs text-amber-700">
+      Debes indicar al menos una red social.
+    </p>
+  )}
+</div>
+
 
       <div className="mt-5">
         <Field

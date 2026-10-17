@@ -1,9 +1,24 @@
-@import url('https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&display=swap');
+
+@import url("https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&display=swap");
 
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Jost", sans-serif;
+
+  --color-st-cream: #F4EDE2;
+  --color-st-white: #FFFFFF;
+  --color-st-caramel: #8A6340;
+  --color-st-champagne: #EBDCC4;
+  --color-st-sand: #D8C3A5;
+  --color-st-gold: #A9825A;
+  --color-st-light-caramel: #A07A55;
+  --color-st-brown: #5A3E28;
+  --color-st-ink: #3E2B1B;
+  --color-st-warm-gray: #6F6052;
+}
+
 :root {
-  /* ST.MARY AGENCY — Brand colors */
   --st-cream: #F4EDE2;
   --st-white: #FFFFFF;
   --st-caramel: #8A6340;
@@ -15,7 +30,11 @@
   --st-ink: #3E2B1B;
   --st-warm-gray: #6F6052;
 
-  font-family: 'Jost', sans-serif;
+  --st-border: #E7DCCF;
+  --st-muted: #756657;
+  --st-shadow: 0 8px 28px rgba(90, 62, 40, 0.05);
+
+  font-family: "Jost", sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
@@ -38,6 +57,14 @@ select {
   font: inherit;
 }
 
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -46,6 +73,84 @@ select {
   background: var(--st-caramel);
   color: var(--st-cream);
 }
+
+:focus-visible {
+  outline: 2px solid var(--st-caramel);
+  outline-offset: 2px;
+}
+
+/* COMPONENTES REUTILIZABLES */
+
+@layer components {
+  .st-card {
+    background: var(--st-white);
+    border: 1px solid var(--st-border);
+    border-radius: 1rem;
+    box-shadow: var(--st-shadow);
+  }
+
+  .st-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 9999px;
+    padding: 0.7rem 1.25rem;
+    background: var(--st-caramel);
+    color: var(--st-white);
+    font-weight: 500;
+    transition: background 0.2s ease;
+  }
+
+  .st-btn-primary:hover:not(:disabled) {
+    background: var(--st-brown);
+  }
+
+  .st-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid var(--st-sand);
+    border-radius: 9999px;
+    padding: 0.7rem 1.25rem;
+    background: var(--st-white);
+    color: var(--st-caramel);
+    font-weight: 500;
+    transition: background 0.2s ease;
+  }
+
+  .st-btn-secondary:hover:not(:disabled) {
+    background: var(--st-cream);
+  }
+
+  .st-input {
+    width: 100%;
+    border: 1px solid var(--st-border);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: var(--st-white);
+    color: var(--st-ink);
+  }
+
+  .st-input:focus {
+    border-color: var(--st-caramel);
+    outline: 2px solid rgba(138, 99, 64, 0.16);
+  }
+
+  .st-badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 0.35rem 0.75rem;
+    background: var(--st-champagne);
+    color: var(--st-brown);
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+}
+
+/* ANIMACIONES EXISTENTES */
 
 @keyframes marquee {
   from {
