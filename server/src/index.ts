@@ -20,14 +20,21 @@ import {
 const app = express();
 
 const PORT = Number(process.env.PORT || 4000);
+const allowedOrigins = [
+  "https://stmaryagency.com",
+  "https://www.stmaryagency.com",
+];
+
+if (process.env.NODE_ENV !== "production") {
+  allowedOrigins.push("http://localhost:5173");
+}
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    origin: allowedOrigins,
     credentials: true,
   })
 );
-
 // IMPORTANTE: procesar JSON antes de las rutas
 app.use(express.json());
 

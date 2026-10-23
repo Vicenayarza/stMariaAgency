@@ -8,6 +8,10 @@ import Register from "./pages/Register";
 import Calculator from "./pages/Calculator";
 import ActivateAccount from "./pages/ActivateAccount";
 
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import DataDeletion from "./pages/DataDeletion";
+
 import Dashboard from "./pages/Dashboard";
 import DashboardLayout from "./components/DashboardLayout";
 import AccountSettings from "./pages/AccountSettings";
@@ -818,16 +822,25 @@ function Landing() {
             <a href="#" className="hover:text-white">
               LinkedIn
             </a>
-
-            <a href="#" className="hover:text-white">
-              Privacidad
-            </a>
           </div>
 
           <div className="text-[9px] uppercase tracking-[0.16em] text-white/30">
             © 2026 ST.MARY AGENCY 
           </div>
         </div>
+        <div className="mt-8 flex flex-wrap justify-center gap-6 border-t border-white/20 pt-6 text-xs">
+  <a href="/terms" className="hover:underline">
+    Condiciones de uso
+  </a>
+
+  <a href="/privacy" className="hover:underline">
+    Política de privacidad
+  </a>
+
+  <a href="/data-deletion" className="hover:underline">
+    Eliminación de datos
+  </a>
+</div>
       </footer>
     </div>
   );
@@ -850,6 +863,13 @@ function App() {
           <Route
   path="/calculadora"
   element={<Calculator />}
+/>
+
+<Route path="/terms" element={<Terms />} />
+<Route path="/privacy" element={<Privacy />} />
+<Route
+  path="/data-deletion"
+  element={<DataDeletion />}
 />
 
           {/* AUTENTICACIÓN */}
