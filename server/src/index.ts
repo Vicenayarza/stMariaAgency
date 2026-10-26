@@ -16,6 +16,7 @@ import notificationRoutes from "./routes/notification.routes.js";
 import {
   startNotificationWorker,
 } from "./workers/notification.worker.js";
+import socialOAuthRoutes from "./routes/social-oauth.routes.js";
 
 const app = express();
 
@@ -65,7 +66,9 @@ app.use("/api/campaigns", campaignRoutes);
 app.use("/api/creators", creatorRoutes);
 app.use("/api/deliverables", deliverableRoutes);
 app.use("/api/creator-portal", creatorPortalRoutes);
+app.use("/api/social", socialOAuthRoutes);
 app.use("/api/social", socialRoutes);
+
 app.use("/api/admin", adminRoutes);
 app.use(
   "/api/notifications",
