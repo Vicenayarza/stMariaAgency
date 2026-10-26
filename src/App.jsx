@@ -863,6 +863,12 @@ function App() {
           <Route
   path="/calculadora"
   element={<Calculator />}
+  
+/>
+
+<Route
+  path="/calculator"
+  element={<Calculator />}
 />
 
 <Route path="/terms" element={<Terms />} />
