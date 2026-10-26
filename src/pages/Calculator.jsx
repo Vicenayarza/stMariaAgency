@@ -3,7 +3,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import stmaryLogo from "../assets/brand/stmary-logo-horizontal-marron.svg";
-import { connectInstagram, getInstagramCalculatorResult } from "../lib/socialCalculator";
+import {
+  connectInstagram,
+  getInstagramCalculatorResult,
+  getInstagramStatus
+} from "../lib/socialCalculator";
 
 const PLATFORMS = {
   INSTAGRAM: {
@@ -47,19 +51,25 @@ function Calculator() {
   const [connectionLoading, setConnectionLoading] = useState(false);
   const [instagramAvailable, setInstagramAvailable] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    const apiUrl = (import.meta.env.VITE_API_URL || "http://localhost:4000").replace(/\/$/, "");
-    fetch(`${apiUrl}/api/social/instagram/status`)
-      .then((response) => response.ok ? response.json() : null)
-      .then((data) => {
-        if (active) setInstagramAvailable(Boolean(data?.enabled));
-      })
-      .catch(() => {
-        if (active) setInstagramAvailable(false);
-      });
-    return () => { active = false; };
-  }, []);
+useEffect(() => {
+  let active = true;
+
+  getInstagramStatus()
+    .then((data) => {
+      if (active) {
+        setInstagramAvailable(Boolean(data?.enabled));
+      }
+    })
+    .catch(() => {
+      if (active) {
+        setInstagramAvailable(false);
+      }
+    });
+
+  return () => {
+    active = false;
+  };
+}, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
