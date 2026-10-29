@@ -140,10 +140,20 @@ router.get("/instagram/callback", async (req, res) => {
     );
   }
 
-  try {
-    const tokenResponse =
-      await exchangeInstagramCode(req.query.code);
+ try {
+  const authorizationCode = req.query.code;
 
+  console.log("Instagram OAuth callback diagnostics:", {
+    codeReceived: true,
+    codeLength: authorizationCode.length,
+    codeHasHash: authorizationCode.includes("#"),
+    codeHasHashSuffix: authorizationCode.endsWith("#_"),
+    redirectUriConfigured:
+      Boolean(process.env.INSTAGRAM_REDIRECT_URI),
+  });
+
+  const tokenResponse =
+    await exchangeInstagramCode(authorizationCode);
     const result = await calculateInstagramEngagement(
       tokenResponse.access_token
     );
