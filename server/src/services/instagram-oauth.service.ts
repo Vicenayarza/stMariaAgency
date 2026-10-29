@@ -1,4 +1,3 @@
-
 const INSTAGRAM_TOKEN_URL =
   "https://api.instagram.com/oauth/access_token";
 
@@ -34,14 +33,60 @@ export async function exchangeInstagramCode(
   const response = await fetch(INSTAGRAM_TOKEN_URL, {
     method: "POST",
     headers: {
-      "Content-Type":
-        "application/x-www-form-urlencoded",
+      "Content-Type": "application/x-www-form-urlencoded",
     },
     body,
     signal: AbortSignal.timeout(15000),
   });
 
   if (!response.ok) {
+    // Leemos el tipo de error sin registrar tokens,
+    // códigos OAuth ni credenciales.
+    let errorType = "UNKNOWN";
+    let errorCode: string | number = "UNKNOWN";
+
+    try {
+      const errorData: unknown = await response.json();
+
+      if (
+        typeof errorData === "object" &&
+        errorData !== null &&
+        "error_type" in errorData &&
+        typeof errorData.error_type === "string"
+      ) {
+        errorType = errorData.error_type;
+      }
+
+      if (
+        typeof errorData === "object" &&
+        errorData !== null &&
+        "error" in errorData &&
+        typeof errorData.error === "object" &&
+        errorData.error !== null
+      ) {
+        const error = errorData.error as Record<string, unknown>;
+
+        if (typeof error.type === "string") {
+          errorType = error.type;
+        }
+
+        if (
+          typeof error.code === "number" ||
+          typeof error.code === "string"
+        ) {
+          errorCode = error.code;
+        }
+      }
+    } catch {
+      // La respuesta de error puede no ser JSON.
+    }
+
+    console.error("Instagram token exchange failed:", {
+      status: response.status,
+      errorType,
+      errorCode,
+    });
+
     throw new Error(
       `INSTAGRAM_TOKEN_EXCHANGE_FAILED_${response.status}`
     );
