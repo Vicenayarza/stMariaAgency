@@ -44,9 +44,18 @@ export async function exchangeInstagramCode(
     // códigos OAuth ni credenciales.
     let errorType = "UNKNOWN";
     let errorCode: string | number = "UNKNOWN";
+    let errorMessage = "UNKNOWN";
 
     try {
       const errorData: unknown = await response.json();
+      if (
+  typeof errorData === "object" &&
+  errorData !== null &&
+  "error_message" in errorData &&
+  typeof errorData.error_message === "string"
+) {
+  errorMessage = errorData.error_message;
+}
 
       if (
         typeof errorData === "object" &&
@@ -81,11 +90,12 @@ export async function exchangeInstagramCode(
       // La respuesta de error puede no ser JSON.
     }
 
-    console.error("Instagram token exchange failed:", {
-      status: response.status,
-      errorType,
-      errorCode,
-    });
+ console.error("Instagram token exchange failed:", {
+  status: response.status,
+  errorType,
+  errorCode,
+  errorMessage,
+});
 
     throw new Error(
       `INSTAGRAM_TOKEN_EXCHANGE_FAILED_${response.status}`
