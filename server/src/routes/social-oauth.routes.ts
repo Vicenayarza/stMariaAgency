@@ -99,6 +99,9 @@ router.get("/instagram/connect", (_req, res) => {
     scope: INSTAGRAM_SCOPES.join(","),
     state,
   });
+  console.log("Instagram OAuth authorization:", {
+  redirectUri: config.redirectUri,
+});
 
   return res.redirect(
     `https://www.instagram.com/oauth/authorize?${params.toString()}`
@@ -151,6 +154,13 @@ router.get("/instagram/callback", async (req, res) => {
     redirectUriConfigured:
       Boolean(process.env.INSTAGRAM_REDIRECT_URI),
   });
+  console.log("Instagram OAuth callback:", {
+  redirectUri: process.env.INSTAGRAM_REDIRECT_URI,
+  codeEndsWithEncodedHash:
+    authorizationCode.endsWith("%23_"),
+  codeEndsWithEncodedHashDecoded:
+    authorizationCode.endsWith("#_"),
+});
 
   const tokenResponse =
     await exchangeInstagramCode(authorizationCode);
